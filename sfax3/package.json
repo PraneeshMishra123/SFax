@@ -1,0 +1,12 @@
+{
+  "name": "sfax",
+  "version": "1.0.0",
+  "description": "SFAX - send messages to the nearest post office",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
