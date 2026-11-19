@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>SFAX ADMIN</title>
+<style>
+:root{--forest:#14203d;--deep:#0b1327;--burg:#6d1f33;--cream:#f7f3ea;--sand:#efe9dc;--gold:#e0aab2;--ink:#1c1f1b;--mute:#6f7568;--line:#ddd5c3;--ok:#2f6b3f;--red:#a8321f}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.55 "Segoe UI","Helvetica Neue",Arial,sans-serif;background:var(--cream);color:var(--ink)}
+header{background:linear-gradient(180deg,#0a1124,#14203d);color:#f4efe3;padding:14px 5vw;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px}header .org{grid-column:2;justify-self:center}header #out{grid-column:3;justify-self:end}
+.org{display:flex;align-items:center;gap:12px}.org img{height:42px;width:auto;background:#fff;border-radius:8px;padding:3px}
+.org b{letter-spacing:.28em;font-size:.78rem;text-transform:uppercase;display:block}.org small{color:#bdb7a5;letter-spacing:.14em}
+main{max-width:1100px;margin:0 auto;padding:26px 5vw 60px}
+h1{font-family:Georgia,serif;font-weight:400;letter-spacing:.08em;text-transform:uppercase;margin:0 0 6px;font-size:1.8rem}
+h2{font-size:1.1rem;margin:26px 0 8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:6px;padding:22px;max-width:440px;margin:30px auto}
+.card.wide{max-width:none;margin:14px 0}
+label{display:block;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);margin:14px 0 6px}
+input,textarea,select{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:3px;background:#fff}
+input:focus,textarea:focus{outline:0;border-color:var(--forest);box-shadow:0 0 0 3px rgba(20,32,61,.15)}
+button{font:inherit;cursor:pointer}
+.btn{display:inline-block;background:var(--forest);color:#f4efe3;border:1px solid var(--forest);padding:11px 20px;letter-spacing:.14em;text-transform:uppercase;font-size:.74rem;margin-top:14px}
+.btn:hover{background:var(--burg);border-color:var(--burg)}.btn.lt{background:transparent;color:var(--forest)}.btn.lt:hover{background:var(--forest);color:#f4efe3}
+.btn.sm{padding:6px 12px;margin:0 4px 0 0;font-size:.68rem}.btn.red{background:var(--red);border-color:var(--red)}
+.btn:disabled{opacity:.5;cursor:default}
+.link{background:none;border:0;color:var(--forest);text-decoration:underline;padding:6px 0;margin-top:8px;display:block}
+.err{color:var(--red);min-height:1.2em;margin-top:8px}.okm{color:var(--ok);margin-top:8px}
+.hint{color:var(--mute);font-size:.88rem}
+.hide{display:none!important}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;border-bottom:1px solid var(--line)}
+.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;letter-spacing:.1em;text-transform:uppercase;font-size:.74rem;color:var(--mute)}
+.tabs button.on{color:var(--forest);border-color:var(--forest);font-weight:700}
+.tabs .n{background:var(--burg);color:#fff;border-radius:9px;padding:1px 7px;font-size:.7rem;margin-left:4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:10px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:6px;padding:14px}.stat b{display:block;font-size:1.7rem}.stat span{color:var(--mute);font-size:.82rem}
+.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;background:#fff}th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;font-size:.88rem;vertical-align:middle}th{background:var(--sand)}
+.tag{display:inline-block;padding:2px 9px;border-radius:9px;font-size:.72rem;font-weight:700;background:var(--sand)}.tag.good{background:#e3f5e8;color:#1f6b35}.tag.bad{background:#fde2e0;color:var(--red)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:700px){.row2{grid-template-columns:1fr}}
+.warn{background:#fff3cd;border:1px solid #e6cf7a;padding:10px 14px;border-radius:4px;margin-top:12px}
+.secret{font:700 1.3rem Consolas,monospace;background:var(--sand);padding:10px 14px;border-radius:4px;display:inline-block;margin-top:8px;user-select:all}
+:focus-visible{outline:3px solid #8b7cf6;outline-offset:2px}
+</style></head><body>
+<header>
+  <div class="org"><img src="/assets/trigun-logo.png" alt="" onerror="this.style.display='none'"><div><b>Trigun Robotics</b><small>SFAX ADMIN</small></div></div>
+  <button class="btn lt hide" id="out" style="color:#f4efe3;border-color:#f4efe3;margin:0" onclick="signOut()">Sign out</button>
+</header>
+<main>
+<!-- ================= sign in ================= -->
+<div id="auth">
+  <div class="card" id="cLogin">
+    <h1>Admin login</h1><p class="hint" id="aMode"></p>
+    <label for="lE">Email</label><input id="lE" type="email" autocomplete="username">
+    <label for="lP">Password</label><input id="lP" type="password" autocomplete="current-password">
+    <div class="err" id="lErr" role="alert"></div>
+    <button class="btn" id="lGo" onclick="login()">Login</button>
+    <button class="link" onclick="show('cForgot')">Forgot password?</button>
+    <button class="link" onclick="show('cLost')">Lost access? (use your ADMIN_TOKEN)</button>
+    <button class="link hide" id="lSetup" onclick="show('cSetup')">First time? Create the admin account</button>
+  </div>
+  <div class="card hide" id="cCode">
+    <h1>Enter the code</h1><p class="hint" id="cInfo"></p>
+    <label for="cV">6-digit code from your email</label><input id="cV" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+    <div class="err" id="cErr" role="alert"></div>
+    <button class="btn" id="cGo" onclick="verify()">Verify and login</button>
+    <button class="link" onclick="show('cLogin')">Back</button>
+  </div>
+  <div class="card hide" id="cSetup">
+    <h1>Create the admin account</h1>
+    <p class="hint">There is only ever <b>one</b> admin account. To prove you own this server, enter the ADMIN_TOKEN that is set on Render.</p>
+    <label for="sT">ADMIN_TOKEN</label><input id="sT" type="password" autocomplete="off">
+    <label for="sE">Your email (codes are sent here)</label><input id="sE" type="email">
+    <label for="sP">Password (at least 10 characters)</label><input id="sP" type="password" autocomplete="new-password">
+    <div class="err" id="sErr" role="alert"></div>
+    <button class="btn" onclick="setup()">Create account</button>
+    <button class="link" onclick="show('cLogin')">Back to login</button>
+  </div>
+  <div class="card hide" id="cForgot">
+    <h1>Forgot password</h1>
+    <p class="hint">We email a 6-digit code to the admin email (valid 10 minutes).</p>
+    <label for="fE">Admin email</label><input id="fE" type="email">
+    <div id="fStep2" class="hide">
+      <label for="fC">6-digit code</label><input id="fC" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+      <label for="fP">New password (at least 10 characters)</label><input id="fP" type="password" autocomplete="new-password">
+    </div>
+    <div class="err" id="fErr" role="alert"></div><div class="okm" id="fOk" role="status"></div>
+    <button class="btn" id="fGo1" onclick="forgot()">Send me a code</button>
+    <button class="btn hide" id="fGo2" onclick="resetPw()">Change password</button>
+    <button class="link" onclick="show('cLogin')">Back to login</button>
+  </div>
+  <div class="card hide" id="cLost">
+    <h1>Lost access</h1>
+    <p class="hint">If you cannot get the emailed code, use the ADMIN_TOKEN from Render to replace the admin account's email and password.</p>
+    <label for="rT">ADMIN_TOKEN</label><input id="rT" type="password" autocomplete="off">
+    <label for="rE">New admin email</label><input id="rE" type="email">
+    <label for="rP">New password (at least 10 characters)</label><input id="rP" type="password" autocomplete="new-password">
+    <div class="err" id="rErr" role="alert"></div>
+    <button class="btn" onclick="recover()">Replace the admin account</button>
+    <button class="link" onclick="show('cLogin')">Back to login</button>
+  </div>
+</div>
+
+<!-- ================= dashboard ================= -->
+<div id="dash" class="hide">
+  <div class="warn hide" id="noMail">Email is not set up, so people cannot receive codes and your own login has no email code. Open the <b>Email</b> tab to fix this.</div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <section id="tOverview"></section>
+  <section id="tAccounts" class="hide"></section>
+  <section id="tHelp" class="hide"></section>
+  <section id="tSite" class="hide"></section>
+  <section id="tEmail" class="hide"></section>
+  <section id="tMe" class="hide"></section>
+</div>
+</main>
+<script>
+const $=i=>document.getElementById(i);
+const el=(t,txt,c)=>{const e=document.createElement(t);if(txt!=null)e.textContent=txt;if(c)e.className=c;return e};
+let token=null,viaToken=false,status={setup:false,mail:false},stats=null;
+async function api(path,method,body){
+  let r;try{r=await fetch(path,{method:method||"GET",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:body?JSON.stringify(body):undefined})}
+  catch(e){throw new Error("Cannot reach the server. If the site was idle it can take a minute to wake up.")}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){const e=new Error(j.error||"Request failed ("+r.status+")");e.status=r.status;throw e}
+  return j}
+const msg=(id,t)=>{$(id).textContent=t||""};
+function show(id){["cLogin","cCode","cSetup","cForgot","cLost"].forEach(x=>$(x).classList.toggle("hide",x!==id));["lErr","cErr","sErr","fErr","rErr"].forEach(x=>msg(x,""));msg("fOk","")}
+async function init(){
+  try{status=await api("/api/admin/status")}catch(e){msg("lErr",e.message)}
+  $("lSetup").classList.toggle("hide",status.setup);
+  $("aMode").textContent=status.setup?"Sign in with your admin email and password."+(status.mail?" A code will be emailed to you.":""):"No admin account exists yet. Create it first.";
+  if(!status.setup)show("cSetup");
+  try{const s=JSON.parse(sessionStorage.getItem("sfax-admin")||"null");if(s&&s.token){token=s.token;await enter()}}catch(e){token=null}
+}
+async function login(){
+  msg("lErr","");$("lGo").disabled=true;
+  try{const j=await api("/api/admin/login","POST",{email:$("lE").value,password:$("lP").value});
+    $("lP").value="";
+    if(j.need2fa){$("cInfo").textContent="We sent a 6-digit code to "+j.email+". It is valid for 10 minutes. Check spam too.";$("cV").value="";show("cCode");$("cV").focus();return}
+    token=j.token;await enter()}
+  catch(e){msg("lErr",e.message)}finally{$("lGo").disabled=false}}
+async function verify(){
+  msg("cErr","");$("cGo").disabled=true;
+  try{const j=await api("/api/admin/verify","POST",{code:$("cV").value.trim()});token=j.token;await enter()}
+  catch(e){msg("cErr",e.message)}finally{$("cGo").disabled=false}}
+async function setup(){
+  msg("sErr","");
+  try{const j=await api("/api/admin/setup","POST",{token:$("sT").value,email:$("sE").value,password:$("sP").value});$("sT").value="";$("sP").value="";token=j.token;status.setup=true;await enter()}
+  catch(e){msg("sErr",e.message)}}
+async function forgot(){
+  msg("fErr","");msg("fOk","");
+  try{await api("/api/admin/forgot","POST",{email:$("fE").value});$("fStep2").classList.remove("hide");$("fGo1").classList.add("hide");$("fGo2").classList.remove("hide");msg("fOk","If that is the admin email, a code was sent. Enter it below with a new password.")}
+  catch(e){msg("fErr",e.message)}}
+async function resetPw(){
+  msg("fErr","");
+  try{await api("/api/admin/reset","POST",{email:$("fE").value,code:$("fC").value.trim(),password:$("fP").value});$("fP").value="";$("fC").value="";$("fStep2").classList.add("hide");$("fGo2").classList.add("hide");$("fGo1").classList.remove("hide");show("cLogin");msg("lErr","");$("aMode").textContent="Password changed. Please login with the new password."}
+  catch(e){msg("fErr",e.message)}}
+async function recover(){
+  msg("rErr","");
+  try{const j=await api("/api/admin/recover","POST",{token:$("rT").value,email:$("rE").value,password:$("rP").value});$("rT").value="";$("rP").value="";token=j.token;status.setup=true;await enter()}
+  catch(e){msg("rErr",e.message)}}
+function signOut(){token=null;try{sessionStorage.removeItem("sfax-admin")}catch(e){}$("dash").classList.add("hide");$("auth").classList.remove("hide");$("out").classList.add("hide");show("cLogin");init()}
+
+/* ---------- dashboard ---------- */
+const TABS=[["tOverview","Overview"],["tAccounts","Accounts"],["tHelp","Help requests"],["tSite","Website"],["tEmail","Email"],["tMe","My account"]];
+let cur="tOverview";
+async function enter(){
+  try{stats=await api("/api/admin/stats")}catch(e){token=null;msg("lErr",e.message);return}
+  try{sessionStorage.setItem("sfax-admin",JSON.stringify({token}))}catch(e){}
+  viaToken=stats.config.via==="token";
+  $("auth").classList.add("hide");$("dash").classList.remove("hide");$("out").classList.remove("hide");
+  $("noMail").classList.toggle("hide",stats.config.mail);
+  drawTabs();open(cur)}
+function drawTabs(){
+  const t=$("tabs");t.textContent="";
+  TABS.forEach(([id,name])=>{const b=el("button",name);b.setAttribute("role","tab");b.id="tb-"+id;b.onclick=()=>open(id);
+    if(id==="tHelp"&&stats.config.helpOpen){b.appendChild(el("span",String(stats.config.helpOpen),"n"))}t.appendChild(b)})}
+function open(id){cur=id;TABS.forEach(([x])=>{$(x).classList.toggle("hide",x!==id);$("tb-"+x).classList.toggle("on",x===id)});
+  ({tOverview:drawOverview,tAccounts:drawAccounts,tHelp:drawHelp,tSite:drawSite,tEmail:drawEmail,tMe:drawMe})[id]()}
+function table(head,rows){const w=el("div",null,"wrap"),t=el("table"),h=el("tr");head.forEach(x=>h.appendChild(el("th",x)));t.appendChild(h);
+  rows.forEach(r=>{const tr=el("tr");r.forEach(c=>{const td=el("td");if(c instanceof Node)td.appendChild(c);else td.textContent=c==null?"":String(c);tr.appendChild(td)});t.appendChild(tr)});w.appendChild(t);return w}
+const tag=(t,c)=>el("span",t,"tag "+(c||""));
+const fmt=t=>new Date(t).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});
+
+async function drawOverview(){
+  const s=$("tOverview");try{stats=await api("/api/admin/stats")}catch(e){}
+  s.textContent="";s.appendChild(el("h2","Overview"));
+  const c=el("div",null,"cards");
+  [["Senders",stats.senders],["Messages",stats.totals.messages],["Waiting for app",stats.totals.waiting],["Sealed",stats.totals.sealed],["Printed",stats.totals.printed],["Open help requests",stats.config.helpOpen]].forEach(([n,v])=>{const d=el("div",null,"stat");d.appendChild(el("b",String(v)));d.appendChild(el("span",n));c.appendChild(d)});
+  s.appendChild(c);
+  s.appendChild(el("h2","Post offices"));
+  s.appendChild(table(["PIN","App key","Recovery email","To print","Waiting","Printed"],stats.postOffices.map(p=>[p.code,tag(p.appKey?"installed":"no app",p.appKey?"good":""),p.email?"yes":"none",p.toPrint,p.waiting,p.printed])));
+  s.appendChild(el("h2","Settings check"));
+  const k=stats.config;
+  s.appendChild(table(["Setting","State"],[["Email",tag(k.mail?"working setup":"not set up",k.mail?"good":"bad")],["Google sign-in",tag(k.google?"on":"off",k.google?"good":"")],["Waiting-message key",tag(k.relay?"set":"SESSION_SECRET missing",k.relay?"good":"bad")],["Print app download link",tag(k.downloadLink?"set":"missing",k.downloadLink?"good":"bad")],["Minimum app version",k.minApp||"not required"],["Printed kept for",k.retainPrintedDays+" days"],["Unprinted kept for",k.expireUnprintedDays+" days"],["Last email attempt",k.mailState&&k.mailState.at?(k.mailState.ok?"sent OK, ":"FAILED, ")+fmt(k.mailState.at)+(k.mailState.error?": "+k.mailState.error:""):"none yet"]]));
+  s.appendChild(el("h2","Activity log (no message text is ever stored)"));
+  s.appendChild(table(["When","What","Who"],stats.audit.map(a=>[fmt(a.t),a.type,a.who])));
+  const b=el("button","Download a backup of the database","btn lt");b.onclick=backup;s.appendChild(b);
+  s.appendChild(el("p","The backup holds password hashes and locked keys. Keep it private.","hint"))}
+async function backup(){
+  try{const r=await fetch("/api/admin/backup",{headers:{Authorization:"Bearer "+token}});if(!r.ok)throw new Error("Not allowed");
+    const b=await r.blob(),a=el("a");a.href=URL.createObjectURL(b);a.download="sfax-backup-"+new Date().toISOString().slice(0,10)+".json";a.click()}
+  catch(e){alert(e.message)}}
+
+async function drawAccounts(){
+  const s=$("tAccounts");s.textContent="";s.appendChild(el("h2","Accounts"));
+  s.appendChild(el("p","Set a new password (leave it empty to generate one), suspend or enable an account, or delete it with its messages. Give new passwords to people by phone, after you have checked who they are. You can never read a message.","hint"));
+  const out=el("div");s.appendChild(out);
+  let a;try{a=await api("/api/admin/accounts")}catch(e){out.appendChild(el("p",e.message,"err"));return}
+  const acts=(role,id,susp)=>{const d=el("div");
+    const pw=el("button","New password","btn sm lt");pw.onclick=async()=>{const typed=prompt("Type a new password (8+ characters), or leave empty to generate one for "+id);if(typed===null)return;
+      try{const j=await api("/api/admin/set-password","POST",{role,id,password:typed});box(j.password?("New password for "+id+":"):"Password changed for "+id+".",j.password)}catch(e){alert(e.message)}};
+    const sp=el("button",susp?"Enable":"Suspend","btn sm lt");sp.onclick=async()=>{try{await api("/api/admin/suspend","POST",{role,id,suspended:!susp});drawAccounts()}catch(e){alert(e.message)}};
+    const del=el("button","Delete","btn sm red");del.onclick=async()=>{if(!confirm("Delete "+id+" and all its messages? This cannot be undone."))return;try{await api("/api/admin/delete","POST",{role,id});drawAccounts()}catch(e){alert(e.message)}};
+    d.append(pw,sp,del);return d};
+  const box=(t,secret)=>{const old=$("pwBox");if(old)old.remove();const d=el("div",null,"warn");d.id="pwBox";d.appendChild(el("div",t));if(secret){d.appendChild(el("div",secret,"secret"));d.appendChild(el("div","Shown only once. Tell the person by phone; they should change it after login.","hint"))}out.prepend(d)};
+  out.appendChild(el("h2","Post offices"));
+  const code=el("button","One-time 8-digit code","btn sm lt");
+  out.appendChild(table(["PIN","Recovery email","Status","Actions"],a.postOffices.map(p=>{const d=acts("po",p.id,p.suspended);
+    const c=el("button","One-time code","btn sm lt");c.onclick=async()=>{try{const j=await api("/api/admin/po-reset-code","POST",{code:p.id});box("One-time code for post office "+p.id+" (valid "+j.expiresInHours+" hours):",j.code)}catch(e){alert(e.message)}};d.appendChild(c);
+    const em=el("button",p.email?"Change email":"Add email","btn sm lt");em.onclick=async()=>{const v=prompt("Recovery email for post office "+p.id);if(!v)return;try{await api("/api/admin/po-email","POST",{code:p.id,email:v});drawAccounts()}catch(e){alert(e.message)}};d.appendChild(em);
+    return [p.id,p.email||"none",p.suspended?tag("suspended","bad"):tag("active","good"),d]})));
+  out.appendChild(el("h2","Senders"));
+  out.appendChild(table(["Email","Name","Status","Actions"],a.senders.map(u=>[u.id+(u.google?" (Google)":""),u.name,u.suspended?tag("suspended","bad"):tag("active","good"),acts("sender",u.id,u.suspended)])))}
+
+async function drawHelp(){
+  const s=$("tHelp");s.textContent="";s.appendChild(el("h2","Help requests"));
+  s.appendChild(el("p","People who could not use an emailed code. Check who they are first (for example call the official number), then open Accounts to set a new password or create a one-time code.","hint"));
+  let h;try{h=await api("/api/admin/help")}catch(e){s.appendChild(el("p",e.message,"err"));return}
+  if(!h.length){s.appendChild(el("p","No help requests yet.","hint"));return}
+  s.appendChild(table(["When","Who","Contact","Note","Status",""],h.map(x=>{const b=el("button","Mark done","btn sm lt");b.onclick=async()=>{try{await api("/api/admin/help-resolve","POST",{id:x.id});stats=await api("/api/admin/stats");drawTabs();open("tHelp")}catch(e){alert(e.message)}};
+    return [fmt(x.at),(x.role==="po"?"Post office ":"Sender ")+x.who,x.contact,x.note,x.open?tag("open","bad"):tag("done","good"),x.open?b:""]})))}
+
+async function drawSite(){
+  const s=$("tSite");s.textContent="";s.appendChild(el("h2","Website controls"));
+  let v;try{v=await api("/api/admin/site")}catch(e){s.appendChild(el("p",e.message,"err"));return}
+  const f=el("div",null,"card wide");
+  const field=(id,label,val,tag)=>{const l=el("label",label);l.htmlFor=id;const i=el(tag||"input");i.id=id;i.value=val||"";f.append(l,i)};
+  field("xB","Announcement banner (shown at the bottom of every page, empty = none)",v.banner);
+  const m=el("label");const cb=el("input");cb.type="checkbox";cb.id="xM";cb.checked=!!v.maintenance;cb.style.cssText="width:auto;margin-right:8px";m.append(cb,"Pause new messages for maintenance");m.style.cssText="text-transform:none;letter-spacing:0;font-size:.95rem;color:var(--ink)";f.appendChild(m);
+  field("xO","Organisation name",v.org);field("xE","Support email",v.email);field("xP","Support phone",v.phone);field("xA","Address",v.address);field("xH","Support hours",v.hours);field("xAb","About text (shown in the Support section)",v.about,"textarea");
+  const b=el("button","Save","btn");const m2=el("div",null,"okm");b.onclick=async()=>{try{await api("/api/admin/site","POST",{banner:$("xB").value,maintenance:$("xM").checked,org:$("xO").value,email:$("xE").value,phone:$("xP").value,address:$("xA").value,hours:$("xH").value,about:$("xAb").value});m2.textContent="Saved. The website shows the new details straight away."}catch(e){m2.className="err";m2.textContent=e.message}};
+  f.append(b,m2);s.appendChild(f)}
+
+async function drawEmail(){
+  const s=$("tEmail");try{stats=await api("/api/admin/stats")}catch(e){}
+  s.textContent="";s.appendChild(el("h2","Email"));
+  const k=stats.config,ms=k.mailState||{};
+  const c=el("div",null,"card wide");
+  c.appendChild(el("p",k.mail?"Email settings are present on the server (MAIL_FROM and an API key).":"Email is NOT set up. Add these on Render under Environment, then wait for the redeploy: BREVO_API_KEY and MAIL_FROM (the sender address you verified in Brevo).",k.mail?"okm":"err"));
+  c.appendChild(el("p",ms.at?("Last email attempt: "+(ms.ok?"sent OK":"FAILED")+" at "+fmt(ms.at)+(ms.error?". Reason: "+ms.error:"."))+"":"No email has been sent since the server started.","hint"));
+  const l=el("label","Send a test email to");l.htmlFor="mT";const i=el("input");i.id="mT";i.type="email";i.value=k.adminEmail||"";
+  const b=el("button","Send test email","btn"),o=el("div"),n=el("p","If it fails, the reason is shown here exactly as the mail service reported it. Common causes: the sender address is not verified in Brevo, the API key is wrong, or it was pasted with a space.","hint");
+  b.onclick=async()=>{b.disabled=true;o.textContent="Sending...";o.className="hint";try{const j=await api("/api/admin/mail-test","POST",{to:i.value});o.className=j.ok?"okm":"err";o.textContent=j.ok?"Sent to "+j.to+". Check the inbox (and spam). If it arrived, codes will arrive too.":"Failed: "+j.error}catch(e){o.className="err";o.textContent=e.message}finally{b.disabled=false}};
+  c.append(l,i,b,o,n);s.appendChild(c)}
+
+async function drawMe(){
+  const s=$("tMe");s.textContent="";s.appendChild(el("h2","My account"));
+  const c=el("div",null,"card wide");
+  if(viaToken){c.appendChild(el("p","You are signed in with the ADMIN_TOKEN, not the admin login. Sign out and login with your email and password to change your account.","hint"));s.appendChild(c);return}
+  c.appendChild(el("p","There is one admin account. Signed in as "+stats.config.adminEmail+".","hint"));
+  const mk=(id,label,type,ac)=>{const l=el("label",label);l.htmlFor=id;const i=el("input");i.id=id;i.type=type;if(ac)i.autocomplete=ac;c.append(l,i)};
+  mk("aC","Current password (required)","password","current-password");mk("aE","New email (optional)","email");mk("aN","New password (optional, 10+ characters)","password","new-password");
+  const b=el("button","Save changes","btn"),m=el("div");
+  b.onclick=async()=>{m.className="hint";m.textContent="";try{const j=await api("/api/admin/account","POST",{current:$("aC").value,email:$("aE").value,newPassword:$("aN").value});if(j.relogin){signOut();return}m.className="okm";m.textContent="Saved.";$("aC").value="";$("aN").value="";stats=await api("/api/admin/stats")}catch(e){m.className="err";m.textContent=e.message}};
+  c.append(b,m);s.appendChild(c)}
+init();
+</script>
+</body></html>
