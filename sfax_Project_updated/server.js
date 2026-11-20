@@ -156,7 +156,7 @@ const server = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
   try {
     if (url === '/health') { res.writeHead(200, { 'Content-Type': 'text/plain' }); return res.end('ok'); }
-    if (req.method === 'GET' && (url === '/' || url === '/index.html')) {
+    if (req.method === 'GET' && (url === '/' || url === '/index.html' || url === '/privacy' || url === '/terms')) {
       const gz = /\bgzip\b/.test(String(req.headers['accept-encoding'] || ''));
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', 'Vary': 'Accept-Encoding', ...(gz ? { 'Content-Encoding': 'gzip' } : {}), ...SEC });
       return res.end(gz ? PAGE_GZ : PAGE);

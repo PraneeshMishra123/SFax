@@ -821,6 +821,9 @@ function fragLogin(){   // coming back from "Continue with Google" (the page add
  if(h.get("ge")){const m=h.get("ge");history.replaceState({v:"home"},"",location.pathname);openAuth("s");$("lerr").textContent=m}
  return false}
 if(!fragLogin())loadSess();
+
+/* /privacy and /terms open the Policies window directly (used as the public links, e.g. for Google sign-in) */
+(function(){const p=location.pathname;if(p==="/privacy"||p==="/terms"){go("policies");const d=document.querySelectorAll("#policies details"),t=d[p==="/terms"?1:0];if(t)t.open=true}})();
 </script>
 </body>
 </html>
