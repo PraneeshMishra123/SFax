@@ -265,7 +265,10 @@ html.herolock,html.herolock body{overflow:hidden;height:100%;overscroll-behavior
 html.herolock #home>:not(.hero),html.herolock footer{display:none!important}
 html.herolock .hero{height:100vh;height:100dvh;min-height:0;overflow-y:auto}
 html.herolock .hero .scroll{display:none}
-#home .sec,#home .trust{scroll-margin-top:64px}   /* a section opened from the menu is not hidden under the top bar */
+/* a menu item opens only its own section, like a separate window (Home or the logo goes back) */
+html.secview .hero,html.secview footer,html.secview #home>:not(.secshow){display:none!important}
+html.secview #home{min-height:100vh}
+html.secview #home>.trust.secshow{min-height:100vh}
 </style>
 </head>
 <body>
@@ -562,13 +565,15 @@ async function api(path,method="GET",body){
  return j}
 
 /* ---- views and home page helpers ---- */
-function view(v){["home","login","app"].forEach(x=>$(x).classList.toggle("hide",x!==v));document.body.classList.toggle("inapp",v!=="home");document.body.classList.toggle("onlogin",v==="login");document.documentElement.classList.toggle("herolock",v==="home");toggleMenu(false);
+function view(v){["home","login","app"].forEach(x=>$(x).classList.toggle("hide",x!==v));document.body.classList.toggle("inapp",v!=="home");document.body.classList.toggle("onlogin",v==="login");document.documentElement.classList.toggle("herolock",v==="home");document.documentElement.classList.remove("secview");toggleMenu(false);
  if(!view.skip&&(!history.state||history.state.v!==v))history.pushState({v},"");window.scrollTo(0,0)}
 function logout(msg){clearInterval(timer);token=null;user=null;try{sessionStorage.removeItem("sfax-s");sessionStorage.removeItem("sfax-d")}catch(e){}view("home");if(typeof msg==="string")toast(msg)}
 function toggleMenu(f){const n=$("mainNav"),b=$("menuBtn");if(!n||!b)return;const o=typeof f==="boolean"?f:!n.classList.contains("open");n.classList.toggle("open",o);b.setAttribute("aria-expanded",o?"true":"false")}
 document.addEventListener("click",e=>{const n=$("mainNav");if(n&&n.classList.contains("open")&&(e.target.closest("#mainNav a")||!e.target.closest(".menu")))toggleMenu(false)});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")toggleMenu(false)});
-function go(id){view("home");document.documentElement.classList.remove("herolock");setTimeout(()=>$(id).scrollIntoView({behavior:"smooth"}),60)}
+function go(id){const h=document.documentElement,was=h.classList.contains("secview");view("home");h.classList.remove("herolock");h.classList.add("secview");
+ document.querySelectorAll("#home>.secshow").forEach(e=>e.classList.remove("secshow"));$(id).classList.add("secshow");
+ if(!was)history.pushState({v:"home",s:id},"");window.scrollTo(0,0)}
 window.addEventListener("scroll",()=>document.body.classList.toggle("scrolled",scrollY>50));
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.15});
 document.querySelectorAll(".rv").forEach(el=>io.observe(el));
