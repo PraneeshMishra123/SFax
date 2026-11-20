@@ -601,7 +601,7 @@ async function doLogin(){
   b.disabled=true;let j;
   if(role==="s"){j=await api("/api/sender/"+(reg?"register":"login"),"POST",{name:$("ln").value,email:$("le").value,password:pw});user={name:j.name}}
   else{j=await api("/api/po/"+(reg?"register":"login"),"POST",{code:$("lp").value.trim(),password:pw,email:reg?$("lpe").value:undefined});user={pin:j.code}}
-  if(j.need2fa){pend={role:role==="s"?"sender":"po",id:role==="s"?$("le").value.trim():$("lp").value.trim()};$("lw").value="";$("tfInfo").textContent="We sent a 6-digit login code to "+j.email+". It is valid for 10 minutes. Check spam too.";$("lmain").classList.add("hide");$("tfBox").classList.remove("hide");$("tcode").value="";$("terr").textContent="";$("tcode").focus();return}
+  if(j.need2fa){pend={role:role==="s"?"sender":"po",id:role==="s"?$("le").value.trim().toLowerCase():$("lp").value.trim(),reg:!!j.verify};$("lw").value="";$("tfInfo").textContent=(j.verify?"To finish creating your account, enter the 6-digit code we sent to ":"We sent a 6-digit login code to ")+j.email+". It is valid for 10 minutes. Check spam too.";$("lmain").classList.add("hide");$("tfBox").classList.remove("hide");$("tcode").value="";$("terr").textContent="";$("tcode").focus();return}
   token=j.token;$("lw").value="";saveSess();const first=role==="p"&&reg;enterApp();if(first)showApp()}
  catch(x){e.textContent=x.message}
  finally{b.disabled=false}}
@@ -626,7 +626,7 @@ function backToLogin(){$("fgBox").classList.add("hide");$("tfBox").classList.add
 async function doTf(){
  const e=$("terr");e.textContent="";
  try{if(!/^[0-9]{6}$/.test($("tcode").value.trim()))throw new Error("Enter the 6-digit code from the email.");
-  $("tfGo").disabled=true;const j=await api("/api/login2fa","POST",{...pend,code:$("tcode").value.trim()});
+  $("tfGo").disabled=true;const j=pend.reg?await api("/api/sender/register/verify","POST",{email:pend.id,code:$("tcode").value.trim()}):await api("/api/login2fa","POST",{role:pend.role,id:pend.id,code:$("tcode").value.trim()});
   user=pend.role==="sender"?{name:j.name}:{pin:j.code};token=j.token;pend=null;$("tfBox").classList.add("hide");$("lmain").classList.remove("hide");saveSess();enterApp()}
  catch(x){e.textContent=x.message}
  finally{$("tfGo").disabled=false}}
