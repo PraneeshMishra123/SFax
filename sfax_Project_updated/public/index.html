@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="herolock">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -259,6 +259,13 @@ html{overflow-y:scroll}                 /* the page scrollbar is always there, s
 .hero .tgl{position:absolute;left:5vw;bottom:26px;font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:#bdb7a5;white-space:nowrap}
 @media(max-width:560px){.hero .tgl{letter-spacing:.12em;font-size:.6rem}}
 @media(max-width:560px){.menubtn .mt{display:none}.bar .brand .bt span{font-size:1.5rem}.bar .brand .lg{height:38px}}
+
+/* ---- home screen is fixed in place; the sections below open only from the menu ---- */
+html.herolock,html.herolock body{overflow:hidden;height:100%;overscroll-behavior:none}
+html.herolock #home>:not(.hero),html.herolock footer{display:none!important}
+html.herolock .hero{height:100vh;height:100dvh;min-height:0;overflow-y:auto}
+html.herolock .hero .scroll{display:none}
+#home .sec,#home .trust{scroll-margin-top:64px}   /* a section opened from the menu is not hidden under the top bar */
 </style>
 </head>
 <body>
@@ -267,7 +274,7 @@ html{overflow-y:scroll}                 /* the page scrollbar is always there, s
 <span class="bsp"></span>
 <a class="brand" href="#home" onclick="logout();return false" aria-label="Trigun Robotics, SFAX home"><img class="lg" src="/assets/trigun-logo.png" alt="" onerror="this.style.display='none'"><span class="bt"><span>SFAX</span></span></a>
 <div class="menu"><button class="menubtn" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mainNav" onclick="toggleMenu()"><span class="mt">Menu</span><span class="mi"><i></i><i></i><i></i></span></button>
-<nav class="nav" id="mainNav" aria-label="Main menu"><a href="#" onclick="go('story');return false">About</a><a href="#" onclick="go('how');return false">How It Works</a><a href="#" onclick="go('ways');return false">Get Started</a><a href="#" onclick="go('security');return false">Security</a><a href="#" onclick="go('faq');return false">FAQ</a><a href="#" onclick="openAuth('s');return false">Sender Login</a><a href="#" onclick="openAuth('p');return false">Post Office Login</a><a class="navbtn" href="#" onclick="downloadApp();return false">Download Print App</a></nav></div>
+<nav class="nav" id="mainNav" aria-label="Main menu"><a href="#" onclick="logout();return false">Home</a><a href="#" onclick="go('story');return false">About</a><a href="#" onclick="go('how');return false">How It Works</a><a href="#" onclick="go('ways');return false">Get Started</a><a href="#" onclick="go('security');return false">Security</a><a href="#" onclick="go('faq');return false">FAQ</a><a href="#" onclick="go('postoffice');return false">For Post Offices</a><a href="#" onclick="go('policies');return false">Privacy &amp; Terms</a><a href="#" onclick="openAuth('s');return false">Sender Login</a><a href="#" onclick="openAuth('p');return false">Post Office Login</a><a class="navbtn" href="#" onclick="downloadApp();return false">Download Print App</a></nav></div>
 </header>
 
 <section id="home">
@@ -555,13 +562,13 @@ async function api(path,method="GET",body){
  return j}
 
 /* ---- views and home page helpers ---- */
-function view(v){["home","login","app"].forEach(x=>$(x).classList.toggle("hide",x!==v));document.body.classList.toggle("inapp",v!=="home");document.body.classList.toggle("onlogin",v==="login");toggleMenu(false);
+function view(v){["home","login","app"].forEach(x=>$(x).classList.toggle("hide",x!==v));document.body.classList.toggle("inapp",v!=="home");document.body.classList.toggle("onlogin",v==="login");document.documentElement.classList.toggle("herolock",v==="home");toggleMenu(false);
  if(!view.skip&&(!history.state||history.state.v!==v))history.pushState({v},"");window.scrollTo(0,0)}
 function logout(msg){clearInterval(timer);token=null;user=null;try{sessionStorage.removeItem("sfax-s");sessionStorage.removeItem("sfax-d")}catch(e){}view("home");if(typeof msg==="string")toast(msg)}
 function toggleMenu(f){const n=$("mainNav"),b=$("menuBtn");if(!n||!b)return;const o=typeof f==="boolean"?f:!n.classList.contains("open");n.classList.toggle("open",o);b.setAttribute("aria-expanded",o?"true":"false")}
 document.addEventListener("click",e=>{const n=$("mainNav");if(n&&n.classList.contains("open")&&(e.target.closest("#mainNav a")||!e.target.closest(".menu")))toggleMenu(false)});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")toggleMenu(false)});
-function go(id){view("home");setTimeout(()=>$(id).scrollIntoView({behavior:"smooth"}),60)}
+function go(id){view("home");document.documentElement.classList.remove("herolock");setTimeout(()=>$(id).scrollIntoView({behavior:"smooth"}),60)}
 window.addEventListener("scroll",()=>document.body.classList.toggle("scrolled",scrollY>50));
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.15});
 document.querySelectorAll(".rv").forEach(el=>io.observe(el));
