@@ -25,6 +25,7 @@ const SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('he
 const sign = (p) => crypto.createHmac('sha256', SECRET).update(p).digest('base64url');
 
 const hash = (pw, salt) => crypto.scryptSync(pw, salt, 32).toString('hex');
+const pendingReg = new Map();   // sign-ups waiting for their emailed code (kept in memory only, 10 minutes)
 const makeUser = (pw) => { const salt = crypto.randomBytes(16).toString('hex'); return { salt, hash: hash(pw, salt) }; };
 const checkPw = (u, pw) => u && crypto.timingSafeEqual(Buffer.from(u.hash, 'hex'), Buffer.from(hash(pw, u.salt), 'hex'));
 const newSession = (role, id, ttl) => { const p = Buffer.from(JSON.stringify({ role, id, iat: Date.now(), exp: Date.now() + (ttl || 7 * 864e5) })).toString('base64url'); return p + '.' + sign(p); };
@@ -145,7 +146,7 @@ const fpOf = (spki) => crypto.createHash('sha256').update(Buffer.from(spki, 'bas
 async function userLogin(req, res, role, id, acct) {   // the password was already checked
   if (acct.suspended) return send(res, 403, { error: 'This account is suspended. Please contact support.' });
   // Emailed login code (if the person switched it on). The Print app is exempt: its protection is the key kept on that computer.
-  if (acct.twofa && acct.email && mailOn() && !req.headers['x-sfax-app']) {
+  if ((acct.twofa || process.env.REQUIRE_LOGIN_CODE === '1') && acct.email && mailOn() && !req.headers['x-sfax-app']) {
     const code = putOtp('login:' + role + ':' + id, 10 * 60e3);
     if (!(await sendMail(acct.email, 'Your SFAX login code', 'Your SFAX login code is ' + code + '. It expires in 10 minutes.\n\nIf this was not you, change your password.'))) return send(res, 502, { error: 'The login code could not be emailed right now. Please try again, or contact support.' });
     return send(res, 200, { need2fa: true, email: mask(acct.email) });
@@ -416,8 +417,27 @@ const server = http.createServer(async (req, res) => {
       if (limited('reg-ip:' + ipOf(req), 20, 3600e3)) return send(res, 429, { error: 'Too many attempts. Please wait a few minutes and try again.' });
       if (!name || !emailOk(email) || pw.length < 8) return send(res, 400, { error: 'Enter your name, a valid email and a password of at least 8 characters.' });
       if (db.senders[email]) return send(res, 409, { error: 'This email is already registered. Please login.' });
+      if (mailOn()) {   // the email must be proved before the account exists: nobody can sign up with someone else's or a made-up address
+        if (limited('regmail:' + email, 5, 3600e3)) return send(res, 429, { error: 'Too many codes were requested for this email. Please wait an hour and try again.' });
+        const now = Date.now(); for (const [k, v] of pendingReg) if (v.exp < now) pendingReg.delete(k);
+        if (pendingReg.size > 5000) return send(res, 503, { error: 'Sign-up is busy. Please try again in a few minutes.' });
+        const code = putOtp('reg:' + email, 10 * 60e3);
+        if (!(await sendMail(email, 'Your SFAX verification code', 'Your SFAX sign-up code is ' + code + '. It expires in 10 minutes.\n\nIf you did not try to create a SFAX account, ignore this email.'))) { delete db.otp['reg:' + email]; return send(res, 502, { error: 'The verification code could not be emailed right now. Please check the address and try again.' }); }
+        pendingReg.set(email, { name: name.slice(0, 60), user: makeUser(pw), exp: now + 10 * 60e3 });
+        return send(res, 200, { need2fa: true, verify: true, email: mask(email) });
+      }
       db.senders[email] = { name, email, ...makeUser(pw) }; save();
       return send(res, 200, { token: newSession('sender', email), name });
+    }
+    if (url === '/api/sender/register/verify' && req.method === 'POST') {   // second step of sign-up: the 6-digit code from the email
+      const email = String(b.email || '').trim().toLowerCase();
+      if (limited('rv-ip:' + ipOf(req), 30, 600e3) || limited('rv-id:' + email, 10, 900e3)) return send(res, 429, { error: 'Too many attempts. Please wait a few minutes and try again.' });
+      const p = pendingReg.get(email);
+      if (!p || p.exp < Date.now() || !checkOtp('reg:' + email, String(b.code || '').trim())) return send(res, 401, { error: 'That code is not correct or has expired. Please start sign-up again to get a new code.' });
+      pendingReg.delete(email);
+      if (db.senders[email]) return send(res, 409, { error: 'This email is already registered. Please login.' });
+      db.senders[email] = { name: p.name, email, ...p.user, emailVerified: true }; audit('sender-signup', mask(email)); save();
+      return send(res, 200, { token: newSession('sender', email), name: p.name });
     }
     if (url === '/api/sender/login' && req.method === 'POST') {
       const email = String(b.email || '').trim().toLowerCase(), u = db.senders[email];
