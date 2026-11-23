@@ -94,6 +94,11 @@ const getAcct = (role, id) => role === 'po' ? db.postoffices[String(id || '').tr
 const SITE_KEYS = { org: 'ORG_NAME', email: 'SUPPORT_EMAIL', phone: 'SUPPORT_PHONE', address: 'ORG_ADDRESS', about: 'ORG_ABOUT', hours: 'SUPPORT_HOURS' };
 const siteVal = (k) => { const v = (db.site || {})[k]; return v != null && v !== '' ? String(v) : (process.env[SITE_KEYS[k]] || ''); };
 const googleOn = () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && /^https?:\/\//.test(process.env.SITE_URL || ''));
+const SW_JS = fs.existsSync(path.join(__dirname, 'public', 'sw.js')) ? fs.readFileSync(path.join(__dirname, 'public', 'sw.js')) : Buffer.from('');
+const MANIFEST = JSON.stringify({ id: '/', name: 'SFAX', short_name: 'SFAX', description: 'Private letters, delivered by hand.', start_url: '/', scope: '/', display: 'standalone', orientation: 'portrait', lang: 'en', background_color: '#14203d', theme_color: '#14203d',
+  icons: [{ src: '/assets/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' }, { src: '/assets/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' }, { src: '/assets/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }] });   // lets phones install the site as an app
+const PINS = require('./lib/pincodes'); PINS.load();   // post office directory (data/pincodes.csv or .csv.gz); stays empty if the file is not there
+const nameFromEmail = (e) => (String(e || '').split('@')[0].replace(/[0-9]+/g, ' ').split(/[._\-+\s]+/).filter(Boolean).slice(0, 3).map((x) => x[0].toUpperCase() + x.slice(1).toLowerCase()).join(' ') || 'Sender').slice(0, 60);   // the name comes from the login email, never typed
 const ASSET_TYPES = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', svg: 'image/svg+xml', webp: 'image/webp' };
 const PAGE = fs.readFileSync(path.join(__dirname, 'public', 'index.html')), PAGE_GZ = zlib.gzipSync(PAGE);
 const ADMIN_PAGE = fs.existsSync(path.join(__dirname, 'public', 'admin.html')) ? fs.readFileSync(path.join(__dirname, 'public', 'admin.html')) : Buffer.from('Admin page missing');
@@ -162,6 +167,8 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', 'Vary': 'Accept-Encoding', ...(gz ? { 'Content-Encoding': 'gzip' } : {}), ...SEC });
       return res.end(gz ? PAGE_GZ : PAGE);
     }
+    if (req.method === 'GET' && url === '/manifest.webmanifest') { res.writeHead(200, { 'Content-Type': 'application/manifest+json', 'Cache-Control': 'public, max-age=3600', 'X-Content-Type-Options': 'nosniff' }); return res.end(MANIFEST); }
+    if (req.method === 'GET' && url === '/sw.js') { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' }); return res.end(SW_JS); }
     if (req.method === 'GET' && url === '/admin') { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', ...SEC }); return res.end(ADMIN_PAGE); }
     const asm = url.match(/^\/assets\/([A-Za-z0-9_-]{1,60})\.(png|jpe?g|svg|webp)$/);
     if (req.method === 'GET' && asm) {                       // logos: put the image files in public/assets
@@ -175,7 +182,7 @@ const server = http.createServer(async (req, res) => {
 
     // ---- site info, password reset, admin ----
     if (url === '/api/site-info' && req.method === 'GET')
-      return send(res, 200, { org: siteVal('org'), email: siteVal('email'), phone: siteVal('phone'), address: siteVal('address'), about: siteVal('about'), hours: siteVal('hours'), mail: mailOn(), google: googleOn(),
+      return send(res, 200, { org: siteVal('org'), email: siteVal('email'), phone: siteVal('phone'), address: siteVal('address'), about: siteVal('about'), hours: siteVal('hours'), mail: mailOn(), google: googleOn(), pincodes: PINS.ready(),
         banner: (db.site || {}).banner || '', maintenance: !!(db.site || {}).maintenance });
     if (url === '/api/help' && req.method === 'POST') {      // a person who cannot use the emailed code asks the admin for help
       const role = b.role === 'po' ? 'po' : 'sender', who = String(b.id || '').trim().slice(0, 120), note = String(b.note || '').trim().slice(0, 600), contact = String(b.contact || '').trim().slice(0, 120);
@@ -226,7 +233,7 @@ const server = http.createServer(async (req, res) => {
         const em = String(idp.email).toLowerCase();
         let u = db.senders[em];
         if (u && u.suspended) return back('This account is suspended. Please contact support.');
-        if (!u) { u = db.senders[em] = { name: String(idp.name || em.split('@')[0]).slice(0, 60), email: em, ...makeUser(crypto.randomBytes(24).toString('hex')), google: true }; audit('google-signup', mask(em)); }
+        if (!u) { u = db.senders[em] = { name: String(idp.name || nameFromEmail(em)).slice(0, 60), email: em, ...makeUser(crypto.randomBytes(24).toString('hex')), google: true }; audit('google-signup', mask(em)); }
         else audit('google-login', mask(em));
         save();
         res.writeHead(302, { Location: '/#gs=' + newSession('sender', em) + '&gn=' + encodeURIComponent(u.name), 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' }); return res.end();
@@ -261,7 +268,40 @@ const server = http.createServer(async (req, res) => {
       if (acct.email) sendMail(acct.email, 'Your SFAX password was changed', 'The password for your SFAX account was just changed. If this was not you, contact support right away.').catch(() => {});
       return send(res, 200, { ok: true });
     }
-    if (url === '/api/sender/me' && req.method === 'GET') { const s = auth(req, 'sender'); if (!s) return send(res, 401, { error: 'Please login again.' }); const u = db.senders[s.id]; return send(res, 200, { email: u.email, twofa: !!u.twofa, google: !!u.google, mail: mailOn() }); }
+    if (url === '/api/sender/profile' && req.method === 'GET') {   // the sender's own saved address and PIN (filled in once, used to pre-fill every message)
+      const s = auth(req, 'sender'); if (!s) return send(res, 401, { error: 'Please login again.' }); const u = db.senders[s.id];
+      return send(res, 200, { name: u.name, email: u.email, address: u.address || '', pin: u.pin || '', complete: !!(u.address && u.pin) });
+    }
+    if (url === '/api/sender/profile' && req.method === 'POST') {
+      const s = auth(req, 'sender'); if (!s) return send(res, 401, { error: 'Please login again.' }); const u = db.senders[s.id];
+      if (limited('prof:' + s.id, 30, 600e3)) return send(res, 429, { error: 'Too many changes. Please wait a few minutes.' });
+      const name = b.name === undefined ? u.name : String(b.name).replace(/[\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim();   // the sender may correct the name taken from their login
+      if (!name || name.length > 60) return send(res, 400, { error: 'Enter your name (up to 60 characters).' });
+      const address = String(b.address || '').replace(/[\u0000-\u0008\u000b-\u001f]/g, ' ').replace(/[ \t]+/g, ' ').trim().slice(0, 250), pin = String(b.pin || '').trim();
+      if (address.length < 8) return send(res, 400, { error: 'Enter your full address (house number, street, area and city).' });
+      if (!/^[1-9][0-9]{5}$/.test(pin)) return send(res, 400, { error: 'Enter your 6-digit PIN code.' });
+      u.name = name; u.address = address; u.pin = pin; save();
+      return send(res, 200, { ok: true, name, address, pin, known: PINS.ready() ? !!PINS.info(pin) : null });
+    }
+    if (url === '/api/pincode/suggest' && req.method === 'POST') {   // nearest post offices for what the sender typed (POST so the text never sits in a URL or access log; nothing is stored)
+      const s = auth(req, 'sender'); if (!s) return send(res, 401, { error: 'Please login again.' });
+      if (limited('pinq:' + s.id, 150, 60e3)) return send(res, 429, { error: 'Too many lookups. Please wait a moment.' });
+      if (!PINS.ready()) return send(res, 200, { ready: false, results: [], nearby: [] });
+      const flag = (x) => { const po = db.postoffices[x.pin]; return { ...x, registered: !!po, installed: !!(po && po.publicKey) }; };
+      const r = PINS.search(String(b.q || '').slice(0, 400), { nearPin: /^[1-9][0-9]{5}$/.test(String(b.near || '')) ? String(b.near) : '', limit: 6 });
+      const results = r.results.map(flag);
+      const nearby = results.length && !results.some((x) => x.registered) ? PINS.nearbyRegistered(results[0].pin, Object.keys(db.postoffices), 3).map(flag) : [];
+      return send(res, 200, { ready: true, exact: r.exact, results, nearby });
+    }
+    if (url === '/api/pincode/info' && req.method === 'POST') {   // what is at this PIN, and is it on SFAX?
+      const s = auth(req, 'sender'); if (!s) return send(res, 401, { error: 'Please login again.' });
+      if (limited('pinq:' + s.id, 150, 60e3)) return send(res, 429, { error: 'Too many lookups. Please wait a moment.' });
+      const pin = String(b.pin || '').trim(); if (!/^[1-9][0-9]{5}$/.test(pin)) return send(res, 400, { error: 'Enter a 6-digit PIN.' });
+      if (!PINS.ready()) return send(res, 200, { ready: false });
+      const i = PINS.info(pin), po = db.postoffices[pin];
+      return send(res, 200, { ready: true, found: !!i, ...(i || {}), registered: !!po, installed: !!(po && po.publicKey) });
+    }
+    if (url === '/api/sender/me' && req.method === 'GET') { const s = auth(req, 'sender'); if (!s) return send(res, 401, { error: 'Please login again.' }); const u = db.senders[s.id]; return send(res, 200, { email: u.email, name: u.name, twofa: !!u.twofa, google: !!u.google, mail: mailOn() }); }
     if (url === '/api/po/me' && req.method === 'GET') {      // a post office sees whether it has a recovery email on file
       const s = auth(req, 'po'); if (!s) return send(res, 401, { error: 'Please login again.' });
       const po = db.postoffices[s.id];
@@ -333,7 +373,7 @@ const server = http.createServer(async (req, res) => {
           totals: { messages: ms.length, waiting: ms.filter(waiting).length, sealed: ms.filter(m => !m.printed && !waiting(m)).length, printed: ms.filter(m => m.printed).length },
           postOffices: Object.values(db.postoffices).map(p => ({ code: p.code, appKey: !!p.publicKey, email: !!p.email, toPrint: ms.filter(m => m.code === p.code && !m.printed).length, waiting: ms.filter(m => m.code === p.code && waiting(m)).length, printed: ms.filter(m => m.code === p.code && m.printed).length })),
           audit: (db.audit || []).slice(-50).reverse(),
-          config: { mail: mailOn(), google: googleOn(), mailState, helpOpen: (db.help || []).filter(h => h.open).length, adminEmail: db.admin ? db.admin.email : '', via: tokenOk(req) ? 'token' : 'login', relay: !!RELAY, minApp: MIN_APP, downloadLink: !!APP_URL, retainPrintedDays: RETAIN_PRINTED_DAYS, expireUnprintedDays: EXPIRE_UNPRINTED_DAYS },
+          config: { mail: mailOn(), google: googleOn(), pincodes: PINS.count(), mailState, helpOpen: (db.help || []).filter(h => h.open).length, adminEmail: db.admin ? db.admin.email : '', via: tokenOk(req) ? 'token' : 'login', relay: !!RELAY, minApp: MIN_APP, downloadLink: !!APP_URL, retainPrintedDays: RETAIN_PRINTED_DAYS, expireUnprintedDays: EXPIRE_UNPRINTED_DAYS },
           uptimeSeconds: Math.round(process.uptime()) });
       }
       if (url === '/api/admin/backup' && req.method === 'GET') {      // full copy of the database (contains password hashes and locked keys: keep it private)
@@ -413,9 +453,10 @@ const server = http.createServer(async (req, res) => {
 
     // ---- Sender ----
     if (url === '/api/sender/register' && req.method === 'POST') {
-      const email = String(b.email || '').trim().toLowerCase(), name = String(b.name || '').trim(), pw = String(b.password || '');
+      const email = String(b.email || '').trim().toLowerCase(), pw = String(b.password || '');
+      const name = String(b.name || '').trim() || nameFromEmail(email);   // the sender's name is taken from the login email
       if (limited('reg-ip:' + ipOf(req), 20, 3600e3)) return send(res, 429, { error: 'Too many attempts. Please wait a few minutes and try again.' });
-      if (!name || !emailOk(email) || pw.length < 8) return send(res, 400, { error: 'Enter your name, a valid email and a password of at least 8 characters.' });
+      if (!emailOk(email) || pw.length < 8) return send(res, 400, { error: 'Enter a valid email and a password of at least 8 characters.' });
       if (db.senders[email]) return send(res, 409, { error: 'This email is already registered. Please login.' });
       if (mailOn()) {   // the email must be proved before the account exists: nobody can sign up with someone else's or a made-up address
         if (limited('regmail:' + email, 5, 3600e3)) return send(res, 429, { error: 'Too many codes were requested for this email. Please wait an hour and try again.' });
