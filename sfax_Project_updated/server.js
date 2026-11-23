@@ -296,10 +296,16 @@ const server = http.createServer(async (req, res) => {
     if (url === '/api/pincode/info' && req.method === 'POST') {   // what is at this PIN, and is it on SFAX?
       const s = auth(req, 'sender'); if (!s) return send(res, 401, { error: 'Please login again.' });
       if (limited('pinq:' + s.id, 150, 60e3)) return send(res, 429, { error: 'Too many lookups. Please wait a moment.' });
-      const pin = String(b.pin || '').trim(); if (!/^[1-9][0-9]{5}$/.test(pin)) return send(res, 400, { error: 'Enter a 6-digit PIN.' });
-      if (!PINS.ready()) return send(res, 200, { ready: false });
-      const i = PINS.info(pin), po = db.postoffices[pin];
-      return send(res, 200, { ready: true, found: !!i, ...(i || {}), registered: !!po, installed: !!(po && po.publicKey) });
+      const pin = String(b.pin || '').trim(), flag = (x) => { const po = db.postoffices[x.pin]; return { ...x, registered: !!po, installed: !!(po && po.publicKey) }; };
+      const six = (k) => /^[1-9][0-9]{5}$/.test(k);
+      if (/^[1-9][0-9]{2,4}$/.test(pin)) {   // PIN still being typed: the SFAX post offices that start with those digits
+        const matches = Object.keys(db.postoffices).filter((k) => six(k) && k.startsWith(pin)).sort().slice(0, 5).map((k) => flag(PINS.info(k) || { pin: k, name: '', district: '', state: '', others: [] }));
+        return send(res, 200, { ready: PINS.ready(), partial: true, matches });
+      }
+      if (!six(pin)) return send(res, 400, { error: 'Enter a 6-digit PIN.' });
+      const i = PINS.ready() ? PINS.info(pin) : null, po = db.postoffices[pin];
+      const nearby = po ? [] : PINS.nearbyRegistered(pin, Object.keys(db.postoffices), 3).map(flag);   // a PIN with no SFAX post office: the nearest ones that have one
+      return send(res, 200, { ready: PINS.ready(), found: !!i, ...(i || {}), registered: !!po, installed: !!(po && po.publicKey), nearby });
     }
     if (url === '/api/sender/me' && req.method === 'GET') { const s = auth(req, 'sender'); if (!s) return send(res, 401, { error: 'Please login again.' }); const u = db.senders[s.id]; return send(res, 200, { email: u.email, name: u.name, twofa: !!u.twofa, google: !!u.google, mail: mailOn() }); }
     if (url === '/api/po/me' && req.method === 'GET') {      // a post office sees whether it has a recovery email on file
