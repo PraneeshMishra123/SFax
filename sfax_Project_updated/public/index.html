@@ -731,7 +731,7 @@ function renderMain(){
  if(role==="s"){el.innerHTML='<h2>New message</h2><div class="sub">Everything is sent by post. Type the receiver\'s address and pick the nearest post office.</div>'
  +'<label for="to">Who is it for?</label><input id="to" maxlength="60" placeholder="e.g. Amma, Priya, Rahul">'
  +'<div class="two"><div class="side"><h3>Sender</h3><label for="dse">Sender Email ID</label><input id="dse" type="email" maxlength="120" readonly title="Taken from your login"><label for="dsa">Sender Address</label><textarea id="dsa" maxlength="250" placeholder="House no, street, area, city, PIN"></textarea><div class="hint">Filled in from your saved details. <a href="#" onclick="openProf();return false">Change them</a></div></div>'
- +'<div class="side"><h3>Receiver</h3><label for="dre">Receiver Email ID</label><input id="dre" type="email" maxlength="120"><label for="dra">Receiver Address</label><textarea id="dra" maxlength="250" oninput="findPO(\'r\')" placeholder="House no, street, area, city, PIN"></textarea><div id="rNear"></div><label for="c">Destination PIN</label><input id="c" inputmode="numeric" maxlength="6" placeholder="6 digits" oninput="pinNote(\'c\',\'cNote\',true)"><div class="hint" id="cNote"></div></div></div>'
+ +'<div class="side"><h3>Receiver</h3><label for="dre">Receiver Email ID</label><input id="dre" type="email" maxlength="120"><label for="dra">Receiver Address</label><textarea id="dra" maxlength="250" oninput="findPO(\'r\')" placeholder="House no, street, area, city, PIN"></textarea><div id="rNear"></div><label for="c">Destination PIN</label><input id="c" inputmode="numeric" maxlength="6" placeholder="6 digits" oninput="pinNote(\'c\',\'cNote\',true)"><div class="hint" id="cNote"></div><div id="cNoteList"></div></div></div>'
  +'<label for="m">Your private message</label><textarea id="m" maxlength="10000" style="min-height:140px" placeholder="Write from the heart. Only they will read this."></textarea><div class="hint" id="mc"></div><div class="hint" id="mw" style="color:#a8321f"></div>'
  +'<div class="hint" style="margin-top:14px">🔒 Encrypted in your browser before it leaves this page. Only the post office\'s SFAX Print app can open it. You can send even if that post office has not installed the app yet; it waits until it does.</div><div class="err" id="serr" role="alert"></div><div id="sok" class="okbox hide" role="status"></div><button class="btn dk" id="sendBtn" onclick="sendMsg()">Seal &amp; send</button>';restoreDraft();return}
  const m=msgs.find(x=>x.id===sel);
@@ -747,7 +747,7 @@ function renderAcct(){const a=$("poAcct");if(!a)return;
 async function saveEmail(){const e=$("perr");e.textContent="";try{await api("/api/po/email","POST",{email:$("pe").value,password:$("ppw").value});$("ppw").value="";toast("Recovery email saved.");await loadMe()}catch(x){e.textContent=x.message}}
 
 /* ---- nearest post office lookup (India Post PIN directory) ---- */
-const PINAPI="https://api.postalpincode.in/",tm={},near={r:[],p:[]},seq={r:0,p:0},SIDE={r:{t:"dra",b:"rNear",c:"c",n:"cNote",sfax:true},p:{t:"pfa",b:"pfNear",c:"pfp",n:"pfNote",sfax:false}};
+const PINAPI="https://api.postalpincode.in/",tm={},near={r:[],p:[],c:[]},seq={r:0,p:0,c:0},SIDE={r:{t:"dra",b:"rNear",c:"c",n:"cNote",sfax:true},p:{t:"pfa",b:"pfNear",c:"pfp",n:"pfNote",sfax:false},c:{t:"",b:"cNoteList",c:"c",n:"cNote",sfax:true}};
 let prof=null;
 async function pq(path){const r=await fetch(PINAPI+path);const j=await r.json();return(j[0]&&j[0].Status==="Success"&&j[0].PostOffice)||[]}
 function findPO(side){clearTimeout(tm[side]);tm[side]=setTimeout(()=>lookup(side),450)}
@@ -783,16 +783,20 @@ async function lookupPublic(side,txt,my){   // used only until the directory fil
   if(my!==seq[side])return;near[side]=list;
   box.innerHTML=list.length?'<div class="hint">Nearest post offices – tap one:</div>'+list.map((o,k)=>poChip(side,k,o)).join(""):'<div class="hint">No post office found. Add the PIN to the address or type it below.</div>'
  }catch(e){box.innerHTML='<div class="hint">Could not look up post offices. Type the PIN below.</div>'}}
-function pickPO(side,k){const o=near[side][k],S=SIDE[side];if(!o)return;$(S.c).value=o.pin;$(S.b).innerHTML='<div class="hint ok">Selected: '+esc(o.name)+' – '+esc(o.pin)+'</div>';pinNote(S.c,S.n,S.sfax)}
-async function pinNote(id,noteId,needSfax){   // under a PIN box: what is at this PIN, and is it on SFAX
- const n=$(noteId);if(!n)return;const v=$(id).value.trim();
- if(!/^[1-9][0-9]{5}$/.test(v)){n.textContent="";n.classList.remove("ok");return}
- try{const j=await api("/api/pincode/info","POST",{pin:v});if($(id).value.trim()!==v)return;
-  if(!j.ready){n.textContent="";return}
-  if(!j.found){n.textContent="This PIN is not in the post office directory. Please check the digits.";n.classList.remove("ok");return}
-  n.textContent=j.name+(j.district?", "+j.district:"")+(j.state?", "+j.state:"")+(needSfax?(j.registered?(j.installed?" – ✓ on SFAX":" – ✓ on SFAX (app not installed yet, your message will wait)"):" – not on SFAX yet, you cannot send here"):"");
-  n.classList.toggle("ok",!needSfax||j.registered)
- }catch(e){n.textContent=""}}
+function pickPO(side,k){const o=near[side][k],S=SIDE[side];if(!o)return;$(S.c).value=o.pin;if(side!=="c")$(S.b).innerHTML='<div class="hint ok">Selected: '+esc(o.name)+' – '+esc(o.pin)+'</div>';pinNote(S.c,S.n,S.sfax)}
+async function pinNote(id,noteId,needSfax){   // under a PIN box: what is at this PIN, is it on SFAX, and the nearest SFAX post offices if not
+ const n=$(noteId),L=$(noteId+"List"),v=$(id).value.trim(),my=++seq.c;if(!n)return;
+ const clear=()=>{n.textContent="";n.classList.remove("ok");if(L)L.innerHTML=""};
+ const chips=(arr)=>{near.c=arr;if(L)L.innerHTML=arr.map((o,k)=>poChip("c",k,o)).join("")};
+ if(!/^[1-9][0-9]{2,5}$/.test(v)){clear();return}
+ try{const j=await api("/api/pincode/info","POST",{pin:v});if($(id).value.trim()!==v||my!==seq.c)return;
+  if(j.partial){if(!needSfax){clear();return}n.classList.remove("ok");
+   if(j.matches.length){n.textContent="SFAX post offices starting with "+v+" – tap one:";chips(j.matches)}else{n.textContent="";if(L)L.innerHTML=""}return}
+  if(j.ready===false&&!needSfax){clear();return}
+  if(j.ready&&!j.found){n.textContent="This PIN is not in the post office directory. Please check the digits."+(needSfax&&j.nearby&&j.nearby.length?" Nearest SFAX post offices – tap one:":"");n.classList.remove("ok");chips(needSfax?j.nearby||[]:[]);return}
+  n.textContent=(j.found?j.name+(j.district?", "+j.district:"")+(j.state?", "+j.state:""):"PIN "+v)+(needSfax?(j.registered?(j.installed?" – ✓ on SFAX":" – ✓ on SFAX (app not installed yet, your message will wait)"):" – not on SFAX yet, you cannot send here"+(j.nearby&&j.nearby.length?". Nearest SFAX post offices – tap one:":"")):"");
+  n.classList.toggle("ok",!needSfax||j.registered);chips(needSfax&&!j.registered?j.nearby||[]:[])
+ }catch(e){clear()}}
 
 /* ---- the sender's saved address and PIN ---- */
 const addrOf=p=>p.address+(p.address.indexOf(p.pin)<0?" - "+p.pin:"");
