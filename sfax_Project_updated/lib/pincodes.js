@@ -7,7 +7,7 @@ const fs = require('fs'), path = require('path'), zlib = require('zlib');
 const ALIAS = {
   office: ['officename', 'office name', 'office_name', 'office', 'postoffice', 'post office', 'post office name'],
   pin: ['pincode', 'pin code', 'pin_code', 'pin', 'postal code', 'postalcode'],
-  district: ['district', 'districtname', 'district name', 'taluk'],
+  district: ['districtname', 'district name', 'district'],
   state: ['statename', 'state name', 'state_name', 'state'],
   type: ['officetype', 'office type', 'office_type'],
   delivery: ['delivery', 'delivery status', 'deliverystatus'],
@@ -38,7 +38,7 @@ function load(file) {
   let buf = fs.readFileSync(f); if (/\.gz$/i.test(f) || (buf[0] === 0x1f && buf[1] === 0x8b)) buf = zlib.gunzipSync(buf);
   const lines = buf.toString('utf8').replace(/^\uFEFF/, '').split(/\r?\n/);
   const head = parseLine(lines[0] || '').map((h) => h.trim().toLowerCase()), col = {};
-  for (const k of Object.keys(ALIAS)) col[k] = head.findIndex((h) => ALIAS[k].includes(h));
+  for (const k of Object.keys(ALIAS)) { col[k] = -1; for (const al of ALIAS[k]) { const ix = head.indexOf(al); if (ix >= 0) { col[k] = ix; break; } } }   // first alias that exists, in priority order
   if (col.office < 0 || col.pin < 0) return 0;               // not the file we expect
   for (let i = 1; i < lines.length; i++) {
     if (!lines[i]) continue;
@@ -103,15 +103,14 @@ function search(text, opt) {
 }
 
 function nearbyRegistered(pin, registeredPins, limit) {      // SFAX post offices close to an area that has none
-  limit = limit || 3; const ref = (BYPIN.get(String(pin)) || [])[0]; if (!ref) return [];
-  const rank = [];
+  limit = limit || 3; pin = String(pin); const ref = (BYPIN.get(pin) || [])[0], rank = [];
   for (const p of registeredPins) {
-    if (p === pin) continue; const a = BYPIN.get(p); if (!a) continue; const o = a[0];
-    const same = o.district && o.district === ref.district && o.state === ref.state ? 3 : o.pin.slice(0, 3) === ref.pin.slice(0, 3) ? 2 : o.state === ref.state ? 1 : 0;
+    if (p === pin || !/^[1-9][0-9]{5}$/.test(p)) continue; const o = (BYPIN.get(p) || [])[0];
+    const same = ref && o && o.district && o.district === ref.district && o.state === ref.state ? 3 : p.slice(0, 3) === pin.slice(0, 3) ? 2 : ref && o && o.state === ref.state ? 1 : 0;
     if (same) rank.push({ same, d: Math.abs(+p - +pin), p });
   }
   rank.sort((a, b) => b.same - a.same || a.d - b.d);
-  return rank.slice(0, limit).map((x) => info(x.p)).filter(Boolean);
+  return rank.slice(0, limit).map((x) => info(x.p) || { pin: x.p, name: '', district: '', state: '', score: 0, others: [] });
 }
 
 module.exports = { load, search, info, nearbyRegistered, ready: () => O.length > 0, count: () => O.length, pinCount: () => BYPIN.size, file: () => LOADED, _norm: norm };
