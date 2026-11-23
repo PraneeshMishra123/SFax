@@ -13,7 +13,7 @@
 <meta name="theme-color" content="#14203d">
 <title>SFAX – Private Messages for Your Close Ones</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--forest:#14203d;--deep:#0b1327;--burg:#6d1f33;--sand:#efe9dc;--cream:#f7f3ea;--gold:#e0aab2;--ink:#1c1f1b;--mute:#6f7568;--line:#ddd5c3;--ok:#2f6b3f;--red:#a8321f}
@@ -275,8 +275,32 @@ html.herolock .hero{height:100vh;height:100dvh;min-height:0;overflow-y:auto}
 html.herolock .hero .scroll{display:none}
 /* a menu item opens only its own section, like a separate window (Home or the logo goes back) */
 html.secview .hero,html.secview footer,html.secview #home>:not(.secshow){display:none!important}
+html.secview .bar{background:var(--forest);box-shadow:0 2px 14px rgba(0,0,0,.25)}   /* the top bar stays solid in a section window, so the logo and menu are always readable */
 html.secview #home{min-height:100vh}
 html.secview #home>.trust.secshow{min-height:100vh}
+
+/* ---- refined, classy typography ---- */
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+body{font-family:"Plus Jakarta Sans","Helvetica Neue",Arial,sans-serif;font-feature-settings:"kern","liga";letter-spacing:.005em}
+::selection{background:var(--gold);color:var(--forest)}
+h1,h2,h3,.brand,.serif{font-kerning:normal;font-feature-settings:"kern","liga","dlig"}
+.hero h1{font-weight:500;letter-spacing:.11em;line-height:1.14;text-wrap:balance;text-shadow:0 2px 30px rgba(0,0,0,.25)}
+@supports((-webkit-background-clip:text) or (background-clip:text)){.hero h1{background:linear-gradient(180deg,#fffaf0 0%,#f3dfc4 55%,#d9b690 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:none}}
+.hero p{line-height:1.9;letter-spacing:.015em;font-weight:400;color:#e2dccb}
+.eyebrow{font-weight:600;letter-spacing:.34em}
+.eyebrow:before{content:"";display:inline-block;width:30px;height:1px;background:currentColor;opacity:.7;vertical-align:middle;margin:-3px 16px 0 0}
+.hero .eyebrow:after{content:"";display:inline-block;width:30px;height:1px;background:currentColor;opacity:.7;vertical-align:middle;margin:-3px 0 0 16px}
+.big{font-weight:500;letter-spacing:-.005em;line-height:1.24;text-wrap:balance}
+.sec p,.split p{line-height:1.85}
+.nav a{font-weight:500;letter-spacing:.22em}
+.cta{font-weight:600;letter-spacing:.28em;transition:background .35s,color .35s,box-shadow .35s,transform .35s cubic-bezier(.2,.7,.2,1)}
+.cta:hover{box-shadow:0 12px 32px rgba(0,0,0,.28);transform:translateY(-2px)}
+.way b,.steps3 em{font-weight:500}
+.quote q{font-weight:400}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.hero>*:not(.scroll):not(.tgl){animation:rise 1.1s cubic-bezier(.2,.7,.2,1) both}
+.hero>:nth-child(2){animation-delay:.12s}.hero>:nth-child(3){animation-delay:.26s}.hero>:nth-child(4){animation-delay:.4s}.hero>:nth-child(5){animation-delay:.52s}
+@media(prefers-reduced-motion:reduce){.hero>*{animation:none!important}.cta{transition:none}.cta:hover{transform:none}}
 </style>
 </head>
 <body>
