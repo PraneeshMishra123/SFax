@@ -23,6 +23,13 @@ async function loadDb() {
 }
 const SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'); // set SESSION_SECRET so logins survive restarts
 const sign = (p) => crypto.createHmac('sha256', SECRET).update(p).digest('base64url');
+const CODE_CHARS = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // no 0/O/1/I/L, so it is easy to read from paper and type
+const dcodeFor = (m) => {   // the collection code: printed under ACKNOWLEDGMENT (the Print app gets it) and shown to the sender; the post office types it when the receiver has collected
+  let n = BigInt('0x' + crypto.createHmac('sha256', SECRET).update('collect:' + m.id).digest('hex').slice(0, 12)), out = '';
+  for (let i = 0; i < 8; i++) { out = CODE_CHARS[Number(n % 31n)] + out; n /= 31n; }
+  return out.slice(0, 4) + '-' + out.slice(4);
+};
+const normCode = (c) => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
 const hash = (pw, salt) => crypto.scryptSync(pw, salt, 32).toString('hex');
 const pendingReg = new Map();   // sign-ups waiting for their emailed code (kept in memory only, 10 minutes)
@@ -61,10 +68,16 @@ async function sendMail(to, subject, text) {   // HTTPS email API (Render's free
 }
 // ---- retention: printed messages are deleted after RETAIN_PRINTED_DAYS, never-printed ones after EXPIRE_UNPRINTED_DAYS ----
 const RETAIN_PRINTED_DAYS = Number(process.env.RETAIN_PRINTED_DAYS || 30), EXPIRE_UNPRINTED_DAYS = Number(process.env.EXPIRE_UNPRINTED_DAYS || 90);
+const HISTORY_DAYS = Number(process.env.HISTORY_DAYS || 180);   // how long the sender's history keeps a tiny record after the message itself is gone
+const histStub = (m, end) => ({ id: m.id, email: m.email, to: m.to, code: m.code, at: m.at, printed: !!m.printed, printedAt: m.printedAt || null, collected: !!m.collected, collectedAt: m.collectedAt || null, end, endedAt: Date.now() });   // never the message, addresses or email IDs
 function purge() {
-  const now = Date.now(), before = db.messages.length;
-  db.messages = db.messages.filter(m => m.printed ? now - (m.printedAt || m.at) < RETAIN_PRINTED_DAYS * 864e5 : now - m.at < EXPIRE_UNPRINTED_DAYS * 864e5);
-  if (db.messages.length !== before) { audit('purge', (before - db.messages.length) + ' old messages deleted'); save(); }
+  const now = Date.now(), before = db.messages.length; db.history = db.history || []; const hb = db.history.length, keep = [];
+  for (const m of db.messages) {
+    const gone = m.printed ? now - (m.printedAt || m.at) >= RETAIN_PRINTED_DAYS * 864e5 : now - m.at >= EXPIRE_UNPRINTED_DAYS * 864e5;
+    if (gone) db.history.push(histStub(m, m.printed ? 'deleted' : 'expired')); else keep.push(m);
+  }
+  db.messages = keep; db.history = db.history.filter(h => now - h.at < HISTORY_DAYS * 864e5);
+  if (db.messages.length !== before || db.history.length !== hb) { if (db.messages.length !== before) audit('purge', (before - db.messages.length) + ' old messages deleted'); save(); }
 }
 const safeEq = (a, b) => { const x = Buffer.from(String(a)), y = Buffer.from(String(b)); return y.length > 0 && x.length === y.length && crypto.timingSafeEqual(x, y); };
 const tokenOk = (req) => safeEq(req.headers['x-admin-token'] || '', process.env.ADMIN_TOKEN || '');   // owner's ADMIN_TOKEN (backup route)
@@ -97,7 +110,7 @@ const googleOn = () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLI
 const SW_JS = fs.existsSync(path.join(__dirname, 'public', 'sw.js')) ? fs.readFileSync(path.join(__dirname, 'public', 'sw.js')) : Buffer.from('');
 const MANIFEST = JSON.stringify({ id: '/', name: 'SFAX', short_name: 'SFAX', description: 'Private letters, delivered by hand.', start_url: '/', scope: '/', display: 'standalone', orientation: 'portrait', lang: 'en', background_color: '#14203d', theme_color: '#14203d',
   icons: [{ src: '/assets/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' }, { src: '/assets/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' }, { src: '/assets/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }] });   // lets phones install the site as an app
-const PINS = require('./lib/pincodes'); PINS.load();   // post office directory (data/pincodes.csv or .csv.gz); stays empty if the file is not there
+const PINS = require('./lib/pincodes'); PINS.load(); PINS.loadPlaces();   // post office directory (data/pincodes.csv or .csv.gz); stays empty if the file is not there
 const nameFromEmail = (e) => (String(e || '').split('@')[0].replace(/[0-9]+/g, ' ').split(/[._\-+\s]+/).filter(Boolean).slice(0, 3).map((x) => x[0].toUpperCase() + x.slice(1).toLowerCase()).join(' ') || 'Sender').slice(0, 60);   // the name comes from the login email, never typed
 const ASSET_TYPES = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', svg: 'image/svg+xml', webp: 'image/webp' };
 const PAGE = fs.readFileSync(path.join(__dirname, 'public', 'index.html')), PAGE_GZ = zlib.gzipSync(PAGE);
@@ -151,7 +164,7 @@ const fpOf = (spki) => crypto.createHash('sha256').update(Buffer.from(spki, 'bas
 async function userLogin(req, res, role, id, acct) {   // the password was already checked
   if (acct.suspended) return send(res, 403, { error: 'This account is suspended. Please contact support.' });
   // Emailed login code (if the person switched it on). The Print app is exempt: its protection is the key kept on that computer.
-  if ((acct.twofa || process.env.REQUIRE_LOGIN_CODE === '1') && acct.email && mailOn() && !req.headers['x-sfax-app']) {
+  if ((acct.twofa || process.env.REQUIRE_LOGIN_CODE !== '0') && acct.email && mailOn() && !req.headers['x-sfax-app']) {   // the emailed code is part of every website login once email is set up (REQUIRE_LOGIN_CODE=0 switches it off)
     const code = putOtp('login:' + role + ':' + id, 10 * 60e3);
     if (!(await sendMail(acct.email, 'Your SFAX login code', 'Your SFAX login code is ' + code + '. It expires in 10 minutes.\n\nIf this was not you, change your password.'))) return send(res, 502, { error: 'The login code could not be emailed right now. Please try again, or contact support.' });
     return send(res, 200, { need2fa: true, email: mask(acct.email) });
@@ -376,10 +389,10 @@ const server = http.createServer(async (req, res) => {
         const ms = db.messages, waiting = (m) => !!(m.enc && m.enc.rk && !m.enc.wk);
         return send(res, 200, {
           senders: Object.keys(db.senders).length,
-          totals: { messages: ms.length, waiting: ms.filter(waiting).length, sealed: ms.filter(m => !m.printed && !waiting(m)).length, printed: ms.filter(m => m.printed).length },
+          totals: { messages: ms.length, waiting: ms.filter(waiting).length, sealed: ms.filter(m => !m.printed && !waiting(m)).length, printed: ms.filter(m => m.printed).length, collected: ms.filter(m => m.collected).length },
           postOffices: Object.values(db.postoffices).map(p => ({ code: p.code, appKey: !!p.publicKey, email: !!p.email, toPrint: ms.filter(m => m.code === p.code && !m.printed).length, waiting: ms.filter(m => m.code === p.code && waiting(m)).length, printed: ms.filter(m => m.code === p.code && m.printed).length })),
           audit: (db.audit || []).slice(-50).reverse(),
-          config: { mail: mailOn(), google: googleOn(), pincodes: PINS.count(), mailState, helpOpen: (db.help || []).filter(h => h.open).length, adminEmail: db.admin ? db.admin.email : '', via: tokenOk(req) ? 'token' : 'login', relay: !!RELAY, minApp: MIN_APP, downloadLink: !!APP_URL, retainPrintedDays: RETAIN_PRINTED_DAYS, expireUnprintedDays: EXPIRE_UNPRINTED_DAYS },
+          config: { mail: mailOn(), google: googleOn(), pincodes: PINS.count(), places: PINS.placeCount(), mailState, helpOpen: (db.help || []).filter(h => h.open).length, adminEmail: db.admin ? db.admin.email : '', via: tokenOk(req) ? 'token' : 'login', relay: !!RELAY, minApp: MIN_APP, downloadLink: !!APP_URL, retainPrintedDays: RETAIN_PRINTED_DAYS, expireUnprintedDays: EXPIRE_UNPRINTED_DAYS },
           uptimeSeconds: Math.round(process.uptime()) });
       }
       if (url === '/api/admin/backup' && req.method === 'GET') {      // full copy of the database (contains password hashes and locked keys: keep it private)
@@ -505,7 +518,7 @@ const server = http.createServer(async (req, res) => {
       const po = db.postoffices[code];
       if (!po) return send(res, 404, { error: 'No post office is registered with PIN ' + code + '.' });
       const rid = String(b.rid || '').slice(0, 64);           // same request sent twice (double click, retry): only one message is kept
-      if (rid && db.messages.some(x => x.email === u.email && x.rid === rid)) return send(res, 200, { ok: true, duplicate: true });
+      const dup = rid && db.messages.find(x => x.email === u.email && x.rid === rid); if (dup) return send(res, 200, { ok: true, duplicate: true, id: dup.id });
       let stored;
       if (enc.wk) {                                          // post office key exists: sealed straight to it
         if (!po.publicKey) return send(res, 409, { error: 'That post office key is not ready yet. Please try again.' });
@@ -518,12 +531,18 @@ const server = http.createServer(async (req, res) => {
       audit('message-sent', mask(u.email) + ' to ' + code);
       if (stored.rk && po.publicKey) rewrap(po, rec);
       db.messages.push(rec);
-      save(); return send(res, 200, { ok: true });
+      save(); return send(res, 200, { ok: true, id: rec.id });
     }
     if (url === '/api/messages/mine' && req.method === 'GET') {
       const s = auth(req, 'sender'); if (!s) return send(res, 401, { error: 'Please login again.' });
       return send(res, 200, db.messages.filter(m => m.email === s.id).sort((a, c) => c.at - a.at)
-        .map(m => ({ id: m.id, mode: m.mode || 'po', code: m.code, to: m.to, printed: m.printed, at: m.at, printedAt: m.printedAt || null, waiting: !!(m.enc && m.enc.rk && !m.enc.wk) })));
+        .map(m => ({ id: m.id, mode: m.mode || 'po', code: m.code, to: m.to, printed: m.printed, at: m.at, printedAt: m.printedAt || null, collected: !!m.collected, collectedAt: m.collectedAt || null, ccode: dcodeFor(m), waiting: !!(m.enc && m.enc.rk && !m.enc.wk) })));
+    }
+
+    if (url === '/api/messages/history' && req.method === 'GET') {   // everything this sender has sent: current messages plus the tiny records of finished ones
+      const s = auth(req, 'sender'); if (!s) return send(res, 401, { error: 'Please login again.' });
+      const rows = db.messages.filter((m) => m.email === s.id).map((m) => ({ ...m, end: null })).concat((db.history || []).filter((h) => h.email === s.id));
+      return send(res, 200, rows.sort((a, c) => c.at - a.at).slice(0, 500).map((m) => ({ id: m.id, to: m.to, code: m.code, at: m.at, printed: !!m.printed, printedAt: m.printedAt || null, collected: !!m.collected, collectedAt: m.collectedAt || null, end: m.end || null, endedAt: m.endedAt || null, ccode: m.end === 'cancelled' ? null : dcodeFor(m) })));
     }
 
     // ---- Post office ----
@@ -569,7 +588,7 @@ const server = http.createServer(async (req, res) => {
     if (url === '/api/inbox' && req.method === 'GET') {   // only sender NAME is revealed here
       const s = auth(req, 'po'); if (!s) return send(res, 401, { error: 'Please login again.' });
       return send(res, 200, db.messages.filter(m => m.code === s.id).sort((a, c) => c.at - a.at)
-        .map(m => ({ id: m.id, name: m.name, printed: m.printed, at: m.at, printedAt: m.printedAt || null, code: m.code })));
+        .map(m => ({ id: m.id, name: m.name, printed: m.printed, at: m.at, printedAt: m.printedAt || null, collected: !!m.collected, collectedAt: m.collectedAt || null, code: m.code })));
     }
     const xm = url.match(/^\/api\/messages\/([\w-]+)\/cancel$/);
     if (xm && req.method === 'POST') {                       // a sender can cancel a message until it has been printed
@@ -577,7 +596,7 @@ const server = http.createServer(async (req, res) => {
       const i = db.messages.findIndex(x => x.id === xm[1] && x.email === s.id);
       if (i < 0) return send(res, 404, { error: 'Message not found.' });
       if (db.messages[i].printed) return send(res, 409, { error: 'This message has already been printed, so it can no longer be cancelled.' });
-      db.messages.splice(i, 1); audit('message-cancelled', mask(s.id)); save();
+      (db.history = db.history || []).push(histStub(db.messages[i], 'cancelled')); db.messages.splice(i, 1); audit('message-cancelled', mask(s.id)); save();
       return send(res, 200, { ok: true });
     }
     const cm = url.match(/^\/api\/inbox\/([\w-]+)\/cipher$/);
@@ -589,7 +608,21 @@ const server = http.createServer(async (req, res) => {
       const po = db.postoffices[s.id];
       if (m.enc.rk && !m.enc.wk && rewrap(po, m)) save();
       if (!m.enc.wk) return send(res, 409, { error: 'This message is not ready yet. Set up the app key first.' });
-      return send(res, 200, { id: m.id, name: m.name, code: m.code, at: m.at, enc: m.enc });
+      return send(res, 200, { id: m.id, name: m.name, code: m.code, at: m.at, enc: m.enc, dcode: dcodeFor(m) });
+    }
+    if (url === '/api/po/collected' && req.method === 'POST') {   // the post office enters the code from the torn-off acknowledgment: the receiver has collected the post
+      const s = auth(req, 'po'); if (!s) return send(res, 401, { error: 'Please login again.' });
+      if (limited('coll:' + s.id, 20, 600e3) || limited('coll-ip:' + ipOf(req), 60, 600e3)) return send(res, 429, { error: 'Too many tries. Wait a few minutes.' });
+      const c = normCode(b.code);
+      if (c.length !== 8) return send(res, 400, { error: 'Enter the 8-character code.' });
+      const m = db.messages.find((x) => x.code === s.id && normCode(dcodeFor(x)) === c);
+      if (!m) return send(res, 404, { error: 'Wrong code.' });
+      if (m.collected) return send(res, 409, { error: 'Already used.' });
+      if (!m.printed) return send(res, 409, { error: 'Not printed yet.' });
+      m.collected = true; m.collectedAt = Date.now(); audit('collected', 'po ' + s.id + ' ' + m.id.slice(0, 8)); save();
+      const snd = db.senders[m.email];
+      if (snd && mailOn() && snd.notify !== false) sendMail(snd.email, 'Your SFAX message was collected', 'Your message for ' + m.to + ' was collected by the receiver at post office ' + m.code + '.\n\nSign in to SFAX to see its status.').catch(() => {});
+      return send(res, 200, { ok: true, name: m.name, to: m.to, collectedAt: m.collectedAt });
     }
     const pm = url.match(/^\/api\/inbox\/([\w-]+)\/printed$/);
     if (pm && req.method === 'POST') {                       // the app reports a successful print
