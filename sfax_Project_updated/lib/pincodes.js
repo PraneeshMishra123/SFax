@@ -29,6 +29,7 @@ function parseLine(line) {                                   // small CSV reader
 }
 
 let O = [], BYPIN = new Map(), IDX = new Map(), SORTED = [], LOADED = null;
+let PL = [];   // known places (colleges, hospitals, landmarks) the owner has listed with a confirmed PIN
 const reset = () => { O = []; BYPIN = new Map(); IDX = new Map(); SORTED = []; LOADED = null; };
 
 function load(file) {
@@ -72,14 +73,47 @@ function prefixTokens(t) {                                   // the word being t
   const out = []; for (let i = lo; i < SORTED.length && SORTED[i].startsWith(t) && out.length < 25; i++) out.push(SORTED[i]); return out;
 }
 
+function loadPlaces(file) {   // data/places.csv: name,aliases,pincode,district,state  (aliases separated by |)
+  PL = [];
+  const cands = file ? [file] : [process.env.PLACES_FILE, path.join(__dirname, '..', 'data', 'places.csv'), path.join(__dirname, '..', 'data', 'places.csv.gz')].filter(Boolean);
+  const f = cands.find((p) => fs.existsSync(p)); if (!f) return 0;
+  let buf = fs.readFileSync(f); if (/\.gz$/i.test(f) || (buf[0] === 0x1f && buf[1] === 0x8b)) buf = zlib.gunzipSync(buf);
+  const lines = buf.toString('utf8').replace(/^\uFEFF/, '').split(/\r?\n/), head = parseLine(lines[0] || '').map((h) => h.trim().toLowerCase());
+  const ix = (...n) => { for (const a of n) { const i = head.indexOf(a); if (i >= 0) return i; } return -1; }, c = { name: ix('name', 'place', 'place name'), al: ix('aliases', 'alias', 'also known as'), pin: ix('pincode', 'pin', 'pin code'), dist: ix('district'), st: ix('state', 'statename') };
+  if (c.name < 0 || c.pin < 0) return 0;
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue; const r = parseLine(lines[i]), pin = String(r[c.pin] || '').trim(), name = String(r[c.name] || '').trim();
+    if (!name || !/^[1-9][0-9]{5}$/.test(pin)) continue;
+    const vars = [name].concat(c.al >= 0 ? String(r[c.al] || '').split(/[|;]/).map((x) => x.trim()).filter(Boolean) : []).map((v) => [...new Set(toks(v, true))]).filter((t) => t.length);
+    if (vars.length) PL.push({ name, pin, district: c.dist >= 0 ? String(r[c.dist] || '').trim() : '', state: c.st >= 0 ? String(r[c.st] || '').trim() : '', vars });
+  }
+  return PL.length;
+}
+
+function placeMatches(Q) {   // a named place found in what was typed: most of its name (or an alias) must be there
+  const out = [], last = Q[Q.length - 1], qs = new Set(Q);
+  for (const pl of PL) {
+    let best = 0, hit = 0;
+    for (const v of pl.vars) {
+      const inQ = v.filter((t) => qs.has(t) || (t.length > 3 && last.length >= 3 && t.startsWith(last))).length, cov = inQ / v.length;
+      if (inQ >= Math.min(2, v.length) && (v.length > 1 || v[0].length >= 4) && cov >= 0.6 && cov + inQ * 0.01 > best) { best = cov + inQ * 0.01; hit = inQ; }
+    }
+    if (best) out.push({ pl, s: 40 + 10 * best + hit });
+  }
+  out.sort((a, b) => b.s - a.s);
+  return out.slice(0, 2).map((x) => { const i = info(x.pl.pin); return { pin: x.pl.pin, name: x.pl.name, district: x.pl.district || (i ? i.district : ''), state: x.pl.state || (i ? i.state : ''), score: Math.round(x.s * 10) / 10, place: true, po: i ? i.name : '', others: [] }; });
+}
+
 function search(text, opt) {
   opt = opt || {}; const limit = opt.limit || 6;
-  if (!O.length) return { exact: false, results: [] };
+  if (!O.length && !PL.length) return { exact: false, results: [] };
   const txt = String(text || '').slice(0, 400), pm = txt.match(/(?:^|\D)([1-9][0-9]{5})(?!\d)/);
   if (pm) { const g = info(pm[1]); if (g) return { exact: true, results: [g] }; }          // a PIN typed in the address wins
   const Q = [...new Set(toks(txt, true))].slice(0, 12), qn = ' ' + norm(txt) + ' ';
   if (!Q.length) return { exact: false, results: [] };
+  const pls = placeMatches(Q), withPlaces = (arr) => pls.concat(arr.filter((x) => !pls.some((p) => p.pin === x.pin))).slice(0, limit);   // a listed place goes first
   const ref = opt.nearPin && BYPIN.get(String(opt.nearPin)) ? BYPIN.get(String(opt.nearPin))[0] : null;
+  if (!O.length) return { exact: false, results: withPlaces([]) };
   const cand = new Map();                                    // office -> number of query words found in its name
   Q.forEach((t, qi) => {
     let list = IDX.get(t);
@@ -99,7 +133,7 @@ function search(text, opt) {
     scored.push({ o, s });
   }
   scored.sort((a, b) => b.s - a.s);
-  return { exact: false, results: group(scored.slice(0, 80), limit) };
+  return { exact: false, results: withPlaces(group(scored.slice(0, 80), limit)) };
 }
 
 function nearbyRegistered(pin, registeredPins, limit) {      // SFAX post offices close to an area that has none
@@ -113,4 +147,4 @@ function nearbyRegistered(pin, registeredPins, limit) {      // SFAX post office
   return rank.slice(0, limit).map((x) => info(x.p) || { pin: x.p, name: '', district: '', state: '', score: 0, others: [] });
 }
 
-module.exports = { load, search, info, nearbyRegistered, ready: () => O.length > 0, count: () => O.length, pinCount: () => BYPIN.size, file: () => LOADED, _norm: norm };
+module.exports = { load, loadPlaces, placeCount: () => PL.length, search, info, nearbyRegistered, ready: () => O.length > 0 || PL.length > 0, count: () => O.length, pinCount: () => BYPIN.size, file: () => LOADED, _norm: norm };
