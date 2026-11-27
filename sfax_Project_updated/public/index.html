@@ -301,15 +301,41 @@ h1,h2,h3,.brand,.serif{font-kerning:normal;font-feature-settings:"kern","liga","
 .hero>*:not(.scroll):not(.tgl){animation:rise 1.1s cubic-bezier(.2,.7,.2,1) both}
 .hero>:nth-child(2){animation-delay:.12s}.hero>:nth-child(3){animation-delay:.26s}.hero>:nth-child(4){animation-delay:.4s}.hero>:nth-child(5){animation-delay:.52s}
 @media(prefers-reduced-motion:reduce){.hero>*{animation:none!important}.cta{transition:none}.cta:hover{transform:none}}
+html.signed .guest{display:none!important}html:not(.signed) .member{display:none!important}
+.ccode{margin-top:12px;padding:12px 14px;border-radius:12px;background:#fff7e0;border:1px dashed #d9b36a}.ccode small{display:block;color:var(--mut)}.ccode b{font-size:1.3rem;letter-spacing:.18em}
+/* ---- history layers ---- */
+.hlay{position:fixed;inset:0;z-index:70;background:rgba(15,22,43,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:flex;justify-content:center;padding:24px}
+.hpanel{background:#fff;border-radius:24px;width:100%;max-width:980px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.35);animation:rise .35s both}
+.htop{display:flex;justify-content:space-between;align-items:flex-start;padding:22px 26px 8px}.htop h2{margin:8px 0 0}
+.hx{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:1rem}
+.hstats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:8px 26px}
+.hstats div{background:#f6f4ef;border-radius:16px;padding:14px 16px}.hstats b{display:block;font-size:1.7rem}.hstats small{color:var(--mut)}
+.hbar{display:flex;gap:12px;align-items:center;padding:10px 26px;flex-wrap:wrap}
+.hchips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer;margin:0 6px 6px 0;font:inherit}.hchips button.on{background:#111;color:#fff;border-color:#111}
+#hQ{flex:1;min-width:200px;height:44px;border-radius:12px;border:1.5px solid var(--line);padding:0 14px;font:inherit}
+.hlist{overflow:auto;padding:4px 26px 26px;flex:1}
+.hm{font-size:.76rem;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);margin:18px 0 8px}
+.hr{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;margin-bottom:10px;cursor:pointer;transition:box-shadow .2s,transform .2s}
+.hr:hover,.hr:focus{box-shadow:0 8px 24px rgba(0,0,0,.09);transform:translateY(-1px);outline:none}
+.hrb{flex:1;min-width:0}.hrb .rt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hch{color:var(--mut);font-size:1.5rem}
+.hdet{position:absolute;top:24px;right:24px;bottom:24px;width:min(440px,calc(100% - 48px));background:#fff;border-radius:24px;box-shadow:-20px 0 60px rgba(0,0,0,.35);padding:22px 26px;overflow:auto;animation:slideIn .3s both}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+.hdh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:14px 0}.hdh h3{margin:0}
+.tl{list-style:none;padding:0;margin:20px 0 6px}.tl li{position:relative;padding:0 0 22px 32px}.tl li b{display:block}.tl li small{color:var(--mut)}
+.tl li:before{content:"";position:absolute;left:4px;top:4px;width:14px;height:14px;border-radius:50%;background:#d9d6cf}.tl li.done:before{background:#2f9e4f}
+.tl li:after{content:"";position:absolute;left:10px;top:22px;bottom:-2px;width:2px;background:#e3e0d9}.tl li:last-child:after{display:none}
+@media(max-width:700px){.hlay{padding:0}.hpanel{border-radius:0}.hstats{grid-template-columns:repeat(2,1fr)}.hdet{inset:0;width:100%;border-radius:0}}
+.mine{margin:16px 0 4px}.mine small{color:var(--mut)}.mtxt{white-space:pre-wrap;word-break:break-word;background:#f6f4ef;border-radius:12px;padding:12px 14px;margin:6px 0;max-height:220px;overflow:auto}.mmeta{color:var(--mut);font-size:.9rem;line-height:1.5}.pfk{display:flex;gap:10px;align-items:flex-start;margin:14px 0 4px;font-size:.88rem;color:var(--mut);cursor:pointer}.pfk input{margin-top:3px}
+.cpy{display:inline-block;margin-top:10px;padding:7px 16px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;font:inherit;font-size:.88rem}.cpy:hover{background:#111;color:#fff;border-color:#111}
 </style>
 </head>
 <body>
 <a class="skip" href="#story">Skip to main content</a>
 <header class="bar">
 <span class="bsp"></span>
-<a class="brand" href="#home" onclick="logout();return false" aria-label="Trigun Robotics, SFAX home"><img class="lg" src="/assets/trigun-logo.png" alt="" onerror="this.style.display='none'"><span class="bt"><span>SFAX</span></span></a>
+<a class="brand" href="#home" onclick="goHome();return false" aria-label="Trigun Robotics, SFAX home"><img class="lg" src="/assets/trigun-logo.png" alt="" onerror="this.style.display='none'"><span class="bt"><span>SFAX</span></span></a>
 <div class="menu"><button class="menubtn" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mainNav" onclick="toggleMenu()"><span class="mt">Menu</span><span class="mi"><i></i><i></i><i></i></span></button>
-<nav class="nav" id="mainNav" aria-label="Main menu"><a href="#" onclick="logout();return false">Home</a><a href="#" onclick="go('story');return false">About</a><a href="#" onclick="go('how');return false">How It Works</a><a href="#" onclick="go('ways');return false">Get Started</a><a href="#" onclick="go('security');return false">Security</a><a href="#" onclick="go('faq');return false">FAQ</a><a href="#" onclick="go('postoffice');return false">For Post Offices</a><a href="#" onclick="go('policies');return false">Privacy &amp; Terms</a><a href="#" onclick="openAuth('s');return false">Sender Login</a><a href="#" onclick="openAuth('p');return false">Post Office Login</a><a class="instlink hide" href="#" onclick="installApp();return false">Install SFAX App</a><a class="navbtn" href="#" onclick="downloadApp();return false">Download Print App</a></nav></div>
+<nav class="nav" id="mainNav" aria-label="Main menu"><a href="#" onclick="goHome();return false">Home</a><a class="member" href="#" onclick="toApp();return false">My Account</a><a href="#" onclick="go('story');return false">About</a><a href="#" onclick="go('how');return false">How It Works</a><a href="#" onclick="go('ways');return false">Get Started</a><a href="#" onclick="go('security');return false">Security</a><a href="#" onclick="go('faq');return false">FAQ</a><a href="#" onclick="go('postoffice');return false">For Post Offices</a><a href="#" onclick="go('policies');return false">Privacy &amp; Terms</a><a class="guest" href="#" onclick="openAuth('s');return false">Sender Login</a><a class="guest" href="#" onclick="openAuth('p');return false">Post Office Login</a><a class="instlink hide" href="#" onclick="installApp();return false">Install SFAX App</a><a class="navbtn" href="#" onclick="downloadApp();return false">Download Print App</a></nav></div>
 </header>
 
 <section id="home">
@@ -317,7 +343,7 @@ h1,h2,h3,.brand,.serif{font-kerning:normal;font-feature-settings:"kern","liga","
 <div class="eyebrow">Private letters, delivered by hand</div>
 <h1>Words meant<br>for one person</h1>
 <p>Write a personal message online. It is locked in your browser, printed only at the post office near them, and handed over sealed. It is never shown on a screen.</p>
-<div class="hbtns"><button class="cta" onclick="openAuth('s')">Sender login</button><button class="cta" onclick="openAuth('p')">Post office login</button><button class="cta" onclick="downloadApp()">Download print app</button></div>
+<div class="hbtns"><button class="cta guest" onclick="openAuth('s')">Sender login</button><button class="cta guest" onclick="openAuth('p')">Post office login</button><button class="cta member" onclick="toApp()">Back to my account</button><button class="cta" onclick="downloadApp()">Download print app</button></div>
 <p class="trustline">🔒 Encrypted in your browser &nbsp;·&nbsp; 🖨 Printed only in the SFAX Print app &nbsp;·&nbsp; ⏳ Send even before the post office has installed it</p>
 <span class="tgl">TriGun Robotics</span><span class="scroll">Scroll</span>
 </div>
@@ -331,7 +357,7 @@ h1,h2,h3,.brand,.serif{font-kerning:normal;font-feature-settings:"kern","liga","
 <div class="feat">
 <div class="fc"><i>✉</i><h3>I want to send a message</h3><p>You only need a web browser. Create a free account, write your message, pick the post office and send.</p><button class="cta dk" onclick="openAuth('s')">Create a sender account</button></div>
 <div class="fc"><i>🏤</i><h3>I run a post office</h3><p>Register your PIN, download SFAX Print on the Windows PC next to your dot matrix printer, and log in. Messages can arrive before you finish.</p><button class="cta dk" onclick="openAuth('p')">Register a post office</button></div>
-<div class="fc"><i>❓</i><h3>I just have questions</h3><p>Read how the encryption works, what we can and cannot see, and how printing, tracking and cancelling work.</p><button class="cta dk" onclick="go('faq')">Read the FAQ</button></div>
+<div class="fc"><i>❓</i><h3>I just have questions</h3><p>Read how the encryption works, what we can and cannot see, and how printing, tracking and deleting work.</p><button class="cta dk" onclick="go('faq')">Read the FAQ</button></div>
 </div></div>
 
 <div id="story" class="sec rv"><div class="split">
@@ -396,14 +422,14 @@ h1,h2,h3,.brand,.serif{font-kerning:normal;font-feature-settings:"kern","liga","
 <p class="cap">Printed in plain text on a dot matrix printer. The receiver tears off the acknowledgment along the dotted line and takes it with them.</p></div>
 
 <div id="tracking" class="sec rv"><div class="eyebrow">Tracking</div><h2 class="big">Always know where your message is</h2>
-<div class="tbl"><table><thead><tr><th>Status</th><th>What it means</th><th>Can I cancel?</th></tr></thead><tbody>
+<div class="tbl"><table><thead><tr><th>Status</th><th>What it means</th><th>Can I delete it?</th></tr></thead><tbody>
 <tr><td><b>Waiting for app</b></td><td>The post office is registered but has not installed the SFAX Print app yet. Your message is stored and waits for it.</td><td>Yes</td></tr>
 <tr><td><b>Sealed</b></td><td>The message is locked for that post office and ready to print whenever they print it.</td><td>Yes</td></tr>
 <tr><td><b>Printed</b></td><td>The post office has printed it. If email notifications are switched on for this site, you also get an email.</td><td>No</td></tr>
-<tr><td><b>Cancelled</b></td><td>You cancelled it before it was printed. It is deleted for good and disappears from your list.</td><td>Not applicable</td></tr>
+<tr><td><b>Deleted</b></td><td>You deleted it before it was printed. The message is deleted for good. A small record (who it was for, the post office PIN, dates) stays in your History.</td><td>Not applicable</td></tr>
 </tbody></table></div>
 <p class="cap"><b>How long does it take?</b> Your message reaches the post office within seconds. When it is printed depends on the post office: it is printed when their staff open the SFAX Print app and press Print. SFAX does not run the physical hand-over and cannot promise a delivery time.</p>
-<p class="cap"><b>If something goes wrong.</b> Wrong PIN or wrong details? Cancel the message and send it again. Printout damaged? Ask the post office to print it again; a printed message stays available to them for 30 days. Never printed? It is deleted after 90 days.</p></div>
+<p class="cap"><b>If something goes wrong.</b> Wrong PIN or wrong details? Delete the message and send it again. Printout damaged? Ask the post office to print it again; a printed message stays available to them for 30 days. Never printed? It is deleted after 90 days.</p></div>
 
 <div id="security" class="trust rv"><div class="in"><div class="eyebrow">Security and privacy</div>
 <h2 class="big">What we can see, and what we cannot</h2>
@@ -455,12 +481,12 @@ h1,h2,h3,.brand,.serif{font-kerning:normal;font-feature-settings:"kern","liga","
 <details><summary>I refreshed the page. Did I lose my message?</summary><p>No. Your draft is saved in this browser tab until you send it or close the tab, and you stay signed in after a refresh.</p></details>
 <details><summary>Can I write in Telugu, Hindi or other languages?</summary><p>You can write and send in any language, and it is encrypted correctly. But the dot matrix printer prints plain English letters, numbers and common punctuation. Other letters come out as a question mark. The page warns you when you type them.</p></details>
 <details><summary>How long can a message be?</summary><p>Up to 10,000 characters, which prints on about three sheets. A longer message simply uses as many sheets as it needs: the address sheet comes first and the blank sheet last. Names are limited to 60 characters and addresses to 250.</p></details>
-<h3 class="fh">Changes and cancelling</h3>
-<details><summary>Can I cancel a message?</summary><p>Yes, until it is printed. Open it in your list and choose Cancel this message. It is deleted for good.</p></details>
-<details><summary>I typed a wrong address or PIN. What now?</summary><p>Cancel the message and send it again with the right details. Messages are locked when you send them, so they cannot be edited afterwards.</p></details>
-<details><summary>What if the post office never prints it?</summary><p>You can cancel and send to another post office. A message that is never printed is deleted after 90 days.</p></details>
+<h3 class="fh">Changes and deleting</h3>
+<details><summary>Can I delete a message?</summary><p>Yes, until it is printed. Open it in your list or in History and choose Delete this message. It is deleted for good.</p></details>
+<details><summary>I typed a wrong address or PIN. What now?</summary><p>Delete the message and send it again with the right details. Messages are locked when you send them, so they cannot be edited afterwards.</p></details>
+<details><summary>What if the post office never prints it?</summary><p>You can delete it and send to another post office. A message that is never printed is deleted after 90 days.</p></details>
 <h3 class="fh">Your data and privacy</h3>
-<details><summary>How long are messages kept?</summary><p>Until they are printed, up to 90 days. After printing, 30 days. Then they are deleted automatically. You can cancel earlier.</p></details>
+<details><summary>How long are messages kept?</summary><p>Until they are printed, up to 90 days. After printing, 30 days. Then the message itself is deleted automatically. A small history record (who it was for, the post office PIN, dates and status; never the message, addresses or email IDs) stays in your account for 180 days. You can delete it earlier.</p></details>
 <details><summary>Does SFAX send my address to anyone?</summary><p>When you type an address, the site looks up nearby post offices in the public India Post PIN directory. For that, the PIN, or a part of the address you typed, is sent from your browser to that directory. You can skip it and type the PIN yourself. Nothing else leaves your browser unlocked.</p></details>
 <details><summary>I forgot my password.</summary><p>On the login page choose Forgot password. We email a 6-digit code to your account's email. It expires in 10 minutes. Enter it with a new password of at least 8 characters, and all older logins end. A post office needs a recovery email on file. If yours has none, contact support: after they check who you are, they give you an 8-digit reset code that works on the same screen. Once you are in, add a recovery email under Account recovery so you can reset it yourself next time.</p></details>
 <h3 class="fh">Printers and post offices</h3>
@@ -476,7 +502,7 @@ h1,h2,h3,.brand,.serif{font-kerning:normal;font-feature-settings:"kern","liga","
 <div class="faq">
 <details><summary>Privacy policy</summary><p><b>What we collect.</b> Your name (taken from your login email or Google account), email and a password hash, and the address and PIN you save for yourself so we can fill in your messages. For each message: the sender's name, the name you typed for the receiver, the destination post office PIN, the time and the status. For post offices: the PIN and a recovery email. The message, and the addresses and email IDs written in each message, are encrypted before they reach us and we cannot read them. The suggestions under an address use only the area part you type, are not stored, and are not shared with anyone.</p><p><b>What we do with it.</b> We use it only to run the service: sending verification codes and printed-message notices by email, and showing you your own list. We do not sell your data or show advertising.</p><p><b>Who helps us run SFAX.</b> Web hosting, the database and the email service are provided by third-party companies. They only handle what is described here. The nearest-post-office lookup uses the public India Post PIN directory, as explained in the FAQ.</p><p><b>Your choices.</b> You can cancel a message until it is printed. To delete your account or ask what we hold about you, contact support.</p></details>
 <details><summary>Terms of use</summary><p>SFAX is a service that carries a message to a post office for printing. It is not a courier and does not promise delivery times. You are responsible for what you write and for entering correct addresses and PINs. Do not use SFAX for unlawful, abusive, threatening or unsolicited bulk messages; we may suspend accounts that do. Keep your password safe and tell us if you think someone else has used your account. Post offices are responsible for printing and handing over messages they receive. We may update these terms, and continued use means you accept the update. To the extent the law allows, SFAX is not liable for losses caused by wrong details, printer faults or delays at a post office.</p></details>
-<details><summary>Message retention and deletion</summary><p>A message that is never printed is deleted after 90 days. A printed message is deleted 30 days after printing. You can cancel an unprinted message at any time and it is deleted straight away. Deleted messages cannot be restored. The activity log keeps events such as "message sent" or "printed" without any message text.</p></details>
+<details><summary>Message retention and deletion</summary><p>A message that is never printed is deleted after 90 days. A printed message is deleted 30 days after printing. You can delete an unprinted message at any time and it is deleted straight away. Deleted messages cannot be restored. After a message is deleted, a small history record stays in the sender's account for 180 days: who it was for (the name typed), the post office PIN, the dates and the status, never the message, the addresses or the email IDs. The activity log keeps events such as "message sent" or "printed" without any message text.</p></details>
 </div></div>
 
 <div id="contact" class="sec rv hide"><div class="eyebrow">Support</div><h2 class="big">We are here to help</h2><div id="contactBody" class="ct"></div></div>
@@ -488,7 +514,7 @@ h1,h2,h3,.brand,.serif{font-kerning:normal;font-feature-settings:"kern","liga","
 </section>
 
 <div id="login" class="nv hide">
-<button class="back" onclick="logout()">← Back to home</button>
+<button class="back" onclick="goHome()">← Back to home</button>
 <span class="badge" id="badge">Sender Login</span>
 <h1>Welcome to SFAX!</h1>
 <div class="lcard">
@@ -539,11 +565,11 @@ h1,h2,h3,.brand,.serif{font-kerning:normal;font-feature-settings:"kern","liga","
 
 <div id="app" class="nv hide"><div class="shell">
 <section class="panel">
-<nav class="rail"><div class="logo">S</div><button class="ri on" title="Messages" aria-label="Messages">✉</button><button class="ri sonly" title="My details" aria-label="My details" onclick="openProf()">&#128205;</button><button class="ri" title="Account security" aria-label="Account security" onclick="openSec()">&#9881;</button><button class="ri out" onclick="logout()">Logout</button></nav>
+<nav class="rail"><div class="logo">S</div><button class="ri on" title="Messages" aria-label="Messages">✉</button><button class="ri sonly" title="History" aria-label="History" onclick="openHis()">&#128344;</button><button class="ri sonly" title="My details" aria-label="My details" onclick="openProf()">&#128205;</button><button class="ri" title="Home page" aria-label="Home page" onclick="goHome()">&#8962;</button><button class="ri out" onclick="logout()">Logout</button></nav>
 <div class="list"><h2 id="lt">Messages</h2>
 <div class="tabs"><button id="t1" class="on" onclick="setTab('sealed')">Sealed</button><button id="t2" onclick="setTab('printed')">Printed</button></div>
 <div class="lb" id="lb"></div>
-<details class="legend"><summary>What do the statuses mean?</summary><p><b>Waiting for app:</b> the post office has not installed the app yet. <b>Sealed:</b> ready to print. <b>Printed:</b> done.</p></details></div>
+<details class="legend"><summary>What do the statuses mean?</summary><p><b>Waiting for app:</b> the post office has not installed the app yet. <b>Sealed:</b> ready to print. <b>Printed:</b> at the post office, waiting for the receiver. <b>Collected:</b> the receiver has taken it and the post office has confirmed it.</p></details></div>
 </section>
 <section class="panel main" id="main"></section>
 </div></div>
@@ -567,29 +593,29 @@ h1,h2,h3,.brand,.serif{font-kerning:normal;font-feature-settings:"kern","liga","
 <div id="pfNear"></div>
 <label for="pfp" class="hint">Your PIN code</label><input id="pfp" inputmode="numeric" maxlength="6" placeholder="6 digits" oninput="pinNote('pfp','pfNote',false)" style="width:100%;height:48px;border-radius:12px;border:1.5px solid var(--line);padding:0 14px">
 <div class="hint" id="pfNote"></div>
+<label class="pfk"><input type="checkbox" id="pfKeep"> Keep a copy of my sent messages on this device so I can read them later. Do not tick this on a shared computer.</label>
 <div class="err" id="pfErr" role="alert"></div>
 <button class="btn dk" id="pfGo" onclick="saveProf()" style="margin-top:12px">Save my details</button>
 <button class="btn lt" id="pfClose" onclick="closeProf()" style="margin-top:10px;border:1px solid var(--line)">Cancel</button>
 <button class="pflink" id="pfOut" onclick="closeProf(true);logout()">Logout</button>
 </div></div>
-<div id="secPop" class="nv pop hide" role="dialog" aria-modal="true" aria-labelledby="sT" onclick="if(event.target===this)closeSec()">
-<div class="pcard">
-<span class="badge">Account security</span>
-<h2 id="sT">Login code by email</h2>
-<p id="sInfo"></p>
-<label for="sPw" class="hint">Your password (to confirm)</label><input id="sPw" type="password" autocomplete="current-password" style="width:100%;height:48px;border-radius:12px;border:1.5px solid var(--line);padding:0 14px">
-<div class="err" id="sErr" role="alert"></div>
-<div class="secrow"><button class="btn dk" id="sOn" onclick="setTf(true)">Turn on</button><button class="btn lt" id="sOff" onclick="setTf(false)">Turn off</button></div>
-<button class="btn lt" onclick="closeSec()" style="margin-top:10px;border:1px solid var(--line)">Close</button>
-</div></div>
+<div id="hisLay" class="hlay hide" role="dialog" aria-modal="true" aria-labelledby="hlT" onclick="if(event.target===this)closeHis()">
+<div class="hpanel">
+<div class="htop"><div><span class="badge">History</span><h2 id="hlT">Messages you sent</h2></div><button class="hx" onclick="closeHis()" aria-label="Close history">&#10005;</button></div>
+<div class="hstats" id="hStats"></div>
+<div class="hbar"><div class="hchips" id="hChips"></div><input id="hQ" placeholder="Search name, PIN or order ID" oninput="drawHis()" aria-label="Search your messages"></div>
+<div class="hlist" id="hList"></div>
+</div>
+<div class="hdet hide" id="hDet" role="dialog" aria-modal="true" aria-labelledby="hdT"></div>
+</div>
 <div id="siteBanner" class="hide" role="status"></div>
 <div class="toast hide" id="toast"></div>
 
 <footer>
 <div class="fg">
 <div><span class="brand">SFAX</span><p style="margin:12px 0 0;max-width:300px;font-size:.92rem">Personal messages for your close ones, printed and sealed at the post office.</p></div>
-<div><h4>Explore</h4><a href="#" onclick="logout();return false">Home</a><a href="#" onclick="go('story');return false">About</a><a href="#" onclick="go('how');return false">How it works</a><a href="#" onclick="go('security');return false">Security</a><a href="#" onclick="go('faq');return false">FAQ</a><a href="#" onclick="go('postoffice');return false">For post offices</a><a href="#" onclick="go('policies');return false">Privacy and terms</a><a id="ftContact" class="hide" href="#" onclick="go('contact');return false">Contact support</a></div>
-<div><h4>Log in</h4><a href="#" onclick="openAuth('s');return false">Sender login</a><a href="#" onclick="openAuth('p');return false">Post office login</a><a href="#" onclick="downloadApp();return false">Download SFAX Print app</a></div>
+<div><h4>Explore</h4><a href="#" onclick="goHome();return false">Home</a><a href="#" onclick="go('story');return false">About</a><a href="#" onclick="go('how');return false">How it works</a><a href="#" onclick="go('security');return false">Security</a><a href="#" onclick="go('faq');return false">FAQ</a><a href="#" onclick="go('postoffice');return false">For post offices</a><a href="#" onclick="go('policies');return false">Privacy and terms</a><a id="ftContact" class="hide" href="#" onclick="go('contact');return false">Contact support</a></div>
+<div><h4>Log in</h4><a class="guest" href="#" onclick="openAuth('s');return false">Sender login</a><a class="guest" href="#" onclick="openAuth('p');return false">Post office login</a><a class="member" href="#" onclick="toApp();return false">My account</a><a href="#" onclick="downloadApp();return false">Download SFAX Print app</a></div>
 </div>
 <div class="copy"><span class="tg"><img src="/assets/trigun-logo.png" alt="" onerror="this.style.display='none'">TriGun Robotics</span><span>© 2026 <span id="ftOrg">SFAX</span>. All rights reserved.</span></div>
 </footer>
@@ -611,8 +637,10 @@ async function api(path,method="GET",body){
  return j}
 
 /* ---- views and home page helpers ---- */
-function view(v){["home","login","app"].forEach(x=>$(x).classList.toggle("hide",x!==v));document.body.classList.toggle("inapp",v!=="home");document.body.classList.toggle("onlogin",v==="login");document.documentElement.classList.toggle("herolock",v==="home");document.documentElement.classList.remove("secview");toggleMenu(false);
+function view(v){["home","login","app"].forEach(x=>$(x).classList.toggle("hide",x!==v));document.body.classList.toggle("inapp",v!=="home");document.body.classList.toggle("onlogin",v==="login");document.documentElement.classList.toggle("herolock",v==="home");document.documentElement.classList.remove("secview");document.documentElement.classList.toggle("signed",!!token);toggleMenu(false);
  if(!view.skip&&(!history.state||history.state.v!==v))history.pushState({v},"");window.scrollTo(0,0)}
+function goHome(){view("home")}   // the public home page; a signed-in person stays signed in
+function toApp(){if(token)view("app");else openAuth("s")}
 function logout(msg){clearInterval(timer);token=null;user=null;try{sessionStorage.removeItem("sfax-s");sessionStorage.removeItem("sfax-d")}catch(e){}view("home");if(typeof msg==="string")toast(msg)}
 function toggleMenu(f){const n=$("mainNav"),b=$("menuBtn");if(!n||!b)return;const o=typeof f==="boolean"?f:!n.classList.contains("open");n.classList.toggle("open",o);b.setAttribute("aria-expanded",o?"true":"false")}
 document.addEventListener("click",e=>{const n=$("mainNav");if(n&&n.classList.contains("open")&&(e.target.closest("#mainNav a")||!e.target.closest(".menu")))toggleMenu(false)});
@@ -686,21 +714,7 @@ async function sendHelp(){
   $("hGo").disabled=true;await api("/api/help","POST",{role:role==="s"?"sender":"po",id:$("hid").value,contact:$("hcon").value,note:$("hnote").value});
   $("hok").textContent="Your request was sent. The admin will contact you after checking who you are.";$("hok").classList.remove("hide")}
  catch(x){e.textContent=x.message;$("hGo").disabled=false}}
-/* ---- account security: emailed login code on or off ---- */
-async function openSec(){
- $("secPop").classList.remove("hide");$("sErr").textContent="";$("sPw").value="";$("sInfo").textContent="Loading...";
- try{const j=await api(role==="s"?"/api/sender/me":"/api/po/me");secState={twofa:!!j.twofa,hasEmail:j.hasEmail!==undefined?j.hasEmail:!!j.email,mail:!!j.mail};drawSec()}
- catch(x){$("sInfo").textContent=x.message}}
-function drawSec(){const j=secState;
- $("sInfo").textContent=!j.mail?"Email is not set up on this site yet, so login codes cannot be sent.":!j.hasEmail?"Add a recovery email first (Account recovery on the post office page). The code is sent there.":j.twofa?"A 6-digit code is emailed every time you login on the website. It is ON.":"When ON, a 6-digit code is emailed to you every time you login on the website, after your password. It is OFF.";
- $("sOn").classList.toggle("hide",j.twofa);$("sOff").classList.toggle("hide",!j.twofa)}
-async function setTf(on){
- const e=$("sErr");e.textContent="";
- try{if(!$("sPw").value)throw new Error("Enter your password to confirm.");
-  const j=await api("/api/account/twofa","POST",{enabled:on,password:$("sPw").value});secState.twofa=j.twofa;$("sPw").value="";drawSec();toast(on?"Login code is ON.":"Login code is OFF.")}
- catch(x){e.textContent=x.message}}
-function closeSec(){$("secPop").classList.add("hide")}
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSec()});
+
 function saveSess(){try{sessionStorage.setItem("sfax-s",JSON.stringify({token,role,user}))}catch(e){}}
 function loadSess(){try{const s=JSON.parse(sessionStorage.getItem("sfax-s")||"null");if(s&&s.token&&s.user){token=s.token;role=s.role;user=s.user;enterApp()}}catch(e){}}
 function enterApp(){
@@ -725,7 +739,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeApp()});
 /* ---- list ---- */
 async function refresh(){
  try{const items=await api(role==="s"?"/api/messages/mine":"/api/inbox");
-  msgs=items.map(i=>({id:i.id,to:role==="s"?i.to:null,tp:i.code,name:role==="s"?user.name:i.name,st:i.printed?"printed":"sealed",waiting:i.waiting,at:i.at,pt:i.printedAt}));
+  msgs=items.map(i=>({id:i.id,to:role==="s"?i.to:null,tp:i.code,name:role==="s"?user.name:i.name,st:i.printed?"printed":"sealed",waiting:i.waiting,at:i.at,pt:i.printedAt,col:!!i.collected,ct:i.collectedAt,cc:i.ccode||null}));
   const k=JSON.stringify(msgs);if(k!==last){last=k;renderList();if(role==="p")renderMain()}}
  catch(e){if(e.status===401)logout("Your session ended. Please login again.")}}
 function setTab(t){tab=t;sel=null;renderList();if(role==="p")renderMain()}
@@ -736,18 +750,19 @@ function renderList(){
  $("t1").classList.toggle("on",tab==="sealed");$("t2").classList.toggle("on",tab==="printed");
  if(!items.some(m=>m.id===sel))sel=items.length?items[0].id:null;
  $("lb").innerHTML=items.length?items.map(card).join(""):'<div class="empty">No messages here yet.</div>'}
-function pill(m){return m.st==="printed"?'<span class="pill done">PRINTED</span>':(role==="p"?'<span class="pill go">TO PRINT</span>':(m.waiting?'<span class="pill sealed">WAITING FOR APP</span>':'<span class="pill sealed">SEALED</span>'))}
+function pill(m){return m.col?'<span class="pill done">COLLECTED</span>':m.st==="printed"?'<span class="pill done">PRINTED</span>':(role==="p"?'<span class="pill go">TO PRINT</span>':(m.waiting?'<span class="pill sealed">WAITING FOR APP</span>':'<span class="pill sealed">SEALED</span>'))}
 function card(m){
  const route=role==="s"?(m.to||"")+" · PIN "+m.tp:"From "+m.name,oid="Order ID #SFAX-"+String(m.id).slice(0,5).toUpperCase();
- if(m.id!==sel)return '<div class="c" onclick="pick(\''+m.id+'\')"><div class="row"><div><div class="rt">'+esc(route)+'</div><div class="sub">'+oid+'</div></div>'+pill(m)+'</div></div>';
+ if(m.id!==sel)return '<div class="c" onclick="pick(\''+m.id+'\')"><div class="row"><div><div class="rt">'+esc(route)+'</div><div class="sub">'+oid+(m.cc?' · Receiver code '+esc(m.cc):'')+'</div></div>'+pill(m)+'</div></div>';
  const who=role==="s"?["For",m.to]:["From",m.name];
  return '<div class="c sel"><div class="rt">'+esc(route)+'</div><div class="sub">'+oid+'</div><div class="mid">'+pill(m)+'</div>'
- +'<div class="bar2"><i style="width:'+(m.st==="printed"?100:38)+'%"></i></div>'
+ +'<div class="bar2"><i style="width:'+(m.col?100:m.st==="printed"?72:38)+'%"></i></div>'
  +'<div class="g4"><div><small>Sender</small><b>'+esc(m.name)+'</b></div><div><small>Sealed</small><b>'+esc(fmt(m.at))+'</b></div><div><small>Post office PIN</small><b>'+esc(m.tp)+'</b></div></div>'
  +'<div class="who"><div class="av">'+esc(String(who[1]||"?").charAt(0).toUpperCase())+'</div><div><small>'+who[0]+'</small><b>'+esc(who[1]||"")+'</b></div></div>'
+ +(m.cc?'<div class="ccode"><small>Receiver code</small><b>'+esc(m.cc)+'</b></div>':'')
  +'<button class="hist" onclick="hist=!hist;renderList()"><span>Delivery history and details</span><span class="chev '+(hist?"up":"")+'">⌄</span></button>'
- +(hist?'<ul class="hl"><li>Sealed '+esc(fmt(m.at))+'</li>'+(m.st==="printed"?'<li>Printed '+esc(fmt(m.pt))+'</li>':'<li>Waiting to be printed at post office '+esc(m.tp)+'</li>')+'</ul>':'')
- +(role==="s"&&m.st==="sealed"?'<button class="hist" style="color:#c4281c" onclick="cancelMsg(\''+m.id+'\')"><span>Cancel this message</span><span aria-hidden="true">✕</span></button>':'')+'</div>'}
+ +(hist?'<ul class="hl"><li>Sealed '+esc(fmt(m.at))+'</li>'+(m.st==="printed"?'<li>Printed '+esc(fmt(m.pt))+'</li>'+(m.col?'<li>Collected by the receiver '+esc(fmt(m.ct))+'</li>':'<li>Waiting for the receiver to collect it</li>'):'<li>Waiting to be printed at post office '+esc(m.tp)+'</li>')+'</ul>':'')
+ +(role==="s"&&m.st==="sealed"?'<button class="hist" style="color:#c4281c" onclick="cancelMsg(\''+m.id+'\')"><span>Delete this message</span><span aria-hidden="true">✕</span></button>':'')+'</div>'}
 
 /* ---- right panel ---- */
 function renderMain(){
@@ -759,8 +774,15 @@ function renderMain(){
  +'<label for="m">Your private message</label><textarea id="m" maxlength="10000" style="min-height:140px" placeholder="Write from the heart. Only they will read this."></textarea><div class="hint" id="mc"></div><div class="hint" id="mw" style="color:#a8321f"></div>'
  +'<div class="hint" style="margin-top:14px">🔒 Encrypted in your browser before it leaves this page. Only the post office\'s SFAX Print app can open it. You can send even if that post office has not installed the app yet; it waits until it does.</div><div class="err" id="serr" role="alert"></div><div id="sok" class="okbox hide" role="status"></div><button class="btn dk" id="sendBtn" onclick="sendMsg()">Seal &amp; send</button>';restoreDraft();return}
  const m=msgs.find(x=>x.id===sel);
- if(!$("poMsg")){el.innerHTML='<h2>Print</h2><div class="sub">Messages are encrypted. They can only be opened and printed in the SFAX Print app.</div><button class="btn lt" style="margin-top:14px;border:1px solid var(--line)" onclick="downloadApp()">Download the SFAX Print app</button><div id="poMsg"></div><div id="poAcct" class="big"></div>';renderAcct()}
+ if(!$("poMsg")){el.innerHTML='<h2>Print</h2><div class="sub">Messages are encrypted. They can only be opened and printed in the SFAX Print app.</div><button class="btn lt" style="margin-top:14px;border:1px solid var(--line)" onclick="downloadApp()">Download the SFAX Print app</button><div class="big" id="poColl"><label for="cc" style="margin-top:0">Code</label><input id="cc" maxlength="12" autocapitalize="characters" autocomplete="off" placeholder="K7M2-9QX4" oninput="this.value=this.value.toUpperCase()" onkeydown=\"if(event.keyCode==13)markCollected()\" style="letter-spacing:.14em;font-weight:600"><div class="err" id="cerr" role="alert"></div><div id="cok" class="okbox hide" role="status"></div><button class="btn dk" id="cgo" onclick="markCollected()" style="margin-top:8px">Done</button></div><div id="poMsg"></div><div id="poAcct" class="big"></div>';renderAcct()}
  $("poMsg").innerHTML=(m?'<div class="big"><div class="rt">Message from '+esc(m.name)+'</div><div class="sub">'+esc("Post office "+m.tp)+'</div><div class="hint" style="margin-top:14px">🔒 Encrypted. Open the SFAX Print app on this computer to decrypt and print it on the dot matrix printer.</div></div>':'<div class="empty">Select a message on the left.</div>')}
+async function markCollected(){   // post office: the code from the torn-off acknowledgment slip
+ const e=$("cerr"),ok=$("cok"),b=$("cgo"),c=$("cc").value.trim();e.textContent="";ok.classList.add("hide");
+ if(!c){e.textContent="Enter the code.";return}
+ b.disabled=true;
+ try{const j=await api("/api/po/collected","POST",{code:c});$("cc").value="";ok.textContent="Done.";ok.classList.remove("hide");last="";refresh()}
+ catch(x){e.textContent=x.message;if(x.status===401)logout("Your session ended. Please login again.")}
+ finally{b.disabled=false}}
 let poMe=null;
 async function loadMe(){try{poMe=await api("/api/po/me")}catch(e){poMe=null}renderAcct()}
 function renderAcct(){const a=$("poAcct");if(!a)return;
@@ -781,7 +803,7 @@ function localityOf(txt){   // only the area part is sent for suggestions: a PIN
 function poChip(side,k,o){const dead=SIDE[side].sfax&&o.registered===false;
  return'<button type="button" class="chip"'+(dead?' disabled style="opacity:.55;cursor:not-allowed"':' onclick="pickPO(\''+side+'\','+k+')"')+'><b>'+esc(o.pin)+'</b> &nbsp;'+esc(o.name)+(o.district?', '+esc(o.district):'')+(o.state?', '+esc(o.state):'')
   +(SIDE[side].sfax&&o.registered===true?' <span style="color:#2f6b3f">&#10003; on SFAX'+(o.installed?'':' (app not installed yet)')+'</span>':'')+(dead?' <span style="color:#a8321f">not on SFAX yet</span>':'')
-  +(o.others&&o.others.length?'<br><small style="color:var(--mut)">Also this PIN: '+o.others.map(esc).join(", ")+'</small>':'')+'</button>'}
+  +(o.place&&o.po?'<br><small style="color:var(--mut)">Post office: '+esc(o.po)+'</small>':'')+(o.others&&o.others.length?'<br><small style="color:var(--mut)">Also this PIN: '+o.others.map(esc).join(", ")+'</small>':'')+'</button>'}
 async function lookup(side){
  const S=SIDE[side],box=$(S.b),txt=$(S.t)?$(S.t).value:"";
  if(txt.trim().length<4){box.innerHTML="";return}
@@ -822,6 +844,70 @@ async function pinNote(id,noteId,needSfax){   // under a PIN box: what is at thi
   n.classList.toggle("ok",!needSfax||j.registered);chips(needSfax&&!j.registered?j.nearby||[]:[])
  }catch(e){clear()}}
 
+/* ---- a copy of what the sender wrote, kept ONLY on this device (SFAX cannot read messages, so the server has no copy) ---- */
+const SK=()=>"sfax-sent:"+((prof&&prof.email)||"");
+const keepOn=()=>{try{return localStorage.getItem("sfax-keep")!=="0"}catch(e){return false}};
+function sentGet(){try{return JSON.parse(localStorage.getItem(SK())||"{}")||{}}catch(e){return{}}}
+function sentPut(map){   // newest 100 only; if the browser storage is full, the oldest copies go first
+ const out={};Object.keys(map).sort((a,b)=>(map[b].at||0)-(map[a].at||0)).slice(0,100).forEach(i=>{out[i]=map[i]});
+ for(;;){try{localStorage.setItem(SK(),JSON.stringify(out));return}catch(e){const k=Object.keys(out).sort((a,b)=>(out[a].at||0)-(out[b].at||0))[0];if(!k)return;delete out[k]}}}
+function sentSave(id,c){try{if(!id||!prof||!keepOn())return;const m=sentGet();m[id]=c;sentPut(m)}catch(e){}}
+function sentDel(id){try{const m=sentGet();if(id in m){delete m[id];sentPut(m)}}catch(e){}}
+function sentClear(){try{localStorage.removeItem(SK())}catch(e){}}
+
+/* ---- history: all messages the sender sent, with a detail layer and a timeline ---- */
+let H={rows:[],f:"all",sel:null};
+const hStat=r=>r.end==="cancelled"?"cancelled":r.collected?"collected":r.printed?"printed":r.end==="expired"?"expired":"waiting";
+const hLabel={waiting:"Waiting",printed:"Printed",collected:"Collected",cancelled:"Deleted",expired:"Expired"};
+const hOid=r=>"#SFAX-"+String(r.id).slice(0,5).toUpperCase();
+const hDate=t=>t?new Date(t).toLocaleString("en-IN",{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"}):"";
+function hPill(s){return'<span class="pill '+(s==="collected"||s==="printed"?"done":s==="waiting"?"sealed":"go")+'">'+hLabel[s].toUpperCase()+'</span>'}
+async function openHis(){
+ H.f="all";H.sel=null;$("hQ").value="";$("hList").innerHTML='<div class="empty">Loading…</div>';$("hisLay").classList.remove("hide");$("hDet").classList.add("hide");
+ try{H.rows=await api("/api/messages/history");drawHis()}catch(e){if(e.status===401)logout("Your session ended. Please login again.");else $("hList").innerHTML='<div class="empty">Could not load your history. Please try again.</div>'}}
+function closeHis(){$("hisLay").classList.add("hide")}
+function setHF(f){H.f=f;drawHis()}
+function drawHis(){
+ const rows=H.rows,c=s=>rows.filter(r=>hStat(r)===s).length,other=c("cancelled")+c("expired");
+ $("hStats").innerHTML=[["Sent",rows.length],["Waiting",c("waiting")],["Printed",c("printed")],["Collected",c("collected")]].map(x=>'<div><b>'+x[1]+'</b><small>'+x[0]+'</small></div>').join("");
+ const chips=[["all","All",rows.length],["waiting","Waiting",c("waiting")],["printed","Printed",c("printed")],["collected","Collected",c("collected")],["other","Deleted / expired",other]];
+ $("hChips").innerHTML=chips.map(x=>'<button type="button" class="'+(H.f===x[0]?"on":"")+'" onclick="setHF(\''+x[0]+'\')">'+x[1]+' ('+x[2]+')</button>').join("");
+ const q=$("hQ").value.trim().toLowerCase();
+ const list=rows.filter(r=>{const s=hStat(r);return(H.f==="all"||(H.f==="other"?(s==="cancelled"||s==="expired"):s===H.f))&&(!q||(String(r.to||"")+" "+r.code+" "+hOid(r)).toLowerCase().indexOf(q)>=0)});
+ if(!list.length){$("hList").innerHTML='<div class="empty">'+(rows.length?"No messages match.":"You have not sent any messages yet.")+'</div>';return}
+ let out="",mon="";
+ for(const r of list){const m=new Date(r.at).toLocaleString("en-IN",{month:"long",year:"numeric"}),s=hStat(r);
+  if(m!==mon){mon=m;out+='<div class="hm">'+esc(m)+'</div>'}
+  out+='<div class="hr" tabindex="0" role="button" onclick="openDet(\''+r.id+'\')" onkeydown="if(event.keyCode==13)openDet(\''+r.id+'\')"><div class="av">'+esc(String(r.to||"?").charAt(0).toUpperCase())+'</div><div class="hrb"><div class="rt">'+esc(r.to||"")+'</div><div class="sub">PIN '+esc(r.code)+' · '+esc(hDate(r.at))+' · '+hOid(r)+'</div></div>'+hPill(s)+'<span class="hch" aria-hidden="true">&#8250;</span></div>'}
+ $("hList").innerHTML=out}
+function openDet(id){
+ const r=H.rows.find(x=>x.id===id);if(!r)return;H.sel=id;const s=hStat(r),d=$("hDet");
+ const step=(done,t,sub)=>'<li class="'+(done?"done":"")+'"><b>'+t+'</b><small>'+esc(sub)+'</small></li>';
+ const tl=step(true,"Sealed and sent",hDate(r.at))
+  +(s==="cancelled"?step(true,"You deleted it",hDate(r.endedAt)):s==="expired"?step(true,"Never printed, so it expired",hDate(r.endedAt)):step(!!r.printed,"Printed at post office "+r.code,r.printed?hDate(r.printedAt):"Waiting for the post office to print it")
+   +step(!!r.collected,"Collected by the receiver",r.collected?hDate(r.collectedAt):"Not collected yet"));
+ d.innerHTML='<button class="hx" onclick="closeDet()" aria-label="Back to the list">&#8592;</button><div class="hdh"><h3 id="hdT">To '+esc(r.to||"")+'</h3>'+hPill(s)+'</div>'
+  +'<div class="g4"><div><small>Order ID</small><b>'+hOid(r)+'</b></div><div><small>Post office PIN</small><b>'+esc(r.code)+'</b></div><div><small>Sent</small><b>'+esc(fmt(r.at))+'</b></div></div>'
+  +'<ul class="tl">'+tl+'</ul>'
+  +(r.ccode?'<div class="ccode"><small>Collection code (printed under ACKNOWLEDGMENT)</small><b>'+esc(r.ccode)+'</b><button type="button" class="cpy" onclick="copyCode(\''+esc(r.ccode)+'\')">Copy code</button></div>':'')
+  +mineBox(r)
+  +(s==="waiting"?'<button class="btn lt" style="margin-top:14px;border:1px solid #e6b8b2;color:#c4281c" onclick="delMsg(\''+r.id+'\')">Delete this message</button><p class="hint">You can delete it until it is printed.</p>':'')
+  +(r.end==="deleted"?'<p class="hint">The message itself was deleted from our servers after printing. Only this record remains.</p>':'')
+  +'<button class="btn dk" style="margin-top:14px" onclick="sendAgain(\''+r.id+'\')">Send another to '+esc(r.to||"")+'</button>';
+ d.classList.remove("hide");d.scrollTop=0}
+function mineBox(r){   // what the sender wrote, from the copy kept on this device
+ if(r.end==="cancelled")return"";
+ const c=sentGet()[r.id];
+ if(!c)return'<p class="hint">Your copy of this message is kept only on the device you sent it from, so it is not shown here. SFAX cannot read your messages and has no copy.</p>';
+ return'<div class="mine"><small>Your message</small><div class="mtxt">'+esc(c.m)+'</div><div class="mmeta"><b>To</b> '+esc(c.to)+' · '+esc(c.re)+'<br>'+esc(c.ra)+'<br><b>From</b> '+esc(c.se)+'<br>'+esc(c.sa)+'</div><button type="button" class="pflink" style="margin:8px 0 0" onclick="sentDel(\''+r.id+'\');openDet(\''+r.id+'\')">Remove my copy from this device</button></div>'}
+async function delMsg(id){   // delete before it is printed
+ if(!confirm("Delete this message? It will not be printed and cannot be restored."))return;
+ try{await api("/api/messages/"+id+"/cancel","POST",{});sentDel(id);toast("Message deleted.");closeDet();H.rows=await api("/api/messages/history");drawHis();sel=null;last="";refresh()}catch(x){toast(x.message)}}
+function closeDet(){$("hDet").classList.add("hide")}
+async function copyCode(c){try{await navigator.clipboard.writeText(c);toast("Code copied.")}catch(e){toast("Select the code and copy it.")}}
+function sendAgain(id){const r=H.rows.find(x=>x.id===id);if(!r)return;closeDet();closeHis();$("to").value=r.to||"";$("c").value=r.code;pinNote("c","cNote",true);$("m").focus()}
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("hDet").classList.contains("hide"))closeDet();else if(!$("hisLay").classList.contains("hide"))closeHis()});
+
 /* ---- the sender's saved address and PIN ---- */
 const addrOf=p=>p.address+(p.address.indexOf(p.pin)<0?" - "+p.pin:"");
 function prefill(){   // sender email comes from the login; address from the saved details
@@ -831,7 +917,7 @@ async function loadProfile(){
  if(role!=="s")return;
  try{prof=await api("/api/sender/profile");user=user||{};user.name=prof.name;$("lt").textContent="Hello, "+prof.name;prefill();if(!prof.complete)openProf(true)}catch(e){if(e.status===401)logout("Your session ended. Please login again.")}}
 function openProf(force){
- const f=!!force||!(prof&&prof.complete);$("pfn").value=prof?prof.name:"";$("pfa").value=prof?prof.address:"";$("pfp").value=prof?prof.pin:"";$("pfErr").textContent="";$("pfNear").innerHTML="";$("pfNote").textContent="";
+ const f=!!force||!(prof&&prof.complete);$("pfKeep").checked=keepOn();$("pfn").value=prof?prof.name:"";$("pfa").value=prof?prof.address:"";$("pfp").value=prof?prof.pin:"";$("pfErr").textContent="";$("pfNear").innerHTML="";$("pfNote").textContent="";
  $("pfBadge").textContent=f?"One last step":"Your details";$("pfT").textContent=f?"Where are you sending from?":"My details";
  $("pfClose").classList.toggle("hide",f);$("pfOut").classList.toggle("hide",!f);$("profPop").classList.remove("hide");$("profPop").dataset.force=f?"1":"";
  if(prof&&prof.pin)pinNote("pfp","pfNote",false);$((prof&&prof.name&&!f)?"pfn":"pfa").focus()}
@@ -843,7 +929,8 @@ async function saveProf(){
  if(a.length<8){e.textContent="Enter your full address (house number, street, area and city).";$("pfa").focus();return}
  if(!/^[1-9][0-9]{5}$/.test(p)){e.textContent="Enter your 6-digit PIN code.";$("pfp").focus();return}
  b.disabled=true;
- try{const old=prof&&prof.address?addrOf(prof):"";const j=await api("/api/sender/profile","POST",{name:n,address:a,pin:p});
+ try{try{localStorage.setItem("sfax-keep",$("pfKeep").checked?"1":"0")}catch(_){}if(!$("pfKeep").checked)sentClear();
+  const old=prof&&prof.address?addrOf(prof):"";const j=await api("/api/sender/profile","POST",{name:n,address:a,pin:p});
   prof={...(prof||{}),name:j.name,address:j.address,pin:j.pin,complete:true};user=user||{};user.name=j.name;$("lt").textContent="Hello, "+j.name;
   if(!$("dsa").value||$("dsa").value===old)$("dsa").value=addrOf(prof);
   $("profPop").dataset.force="";closeProf();toast("Your details are saved.")}
@@ -877,8 +964,8 @@ const DF=["to","dse","dsa","dre","dra","c","m"];
 function countM(){const m=$("m");if(!m)return;$("mc").textContent=m.value.length+" / 10000 characters. Your draft is kept in this tab until you send it.";$("mw").textContent=/[^\x00-\x7F]/.test(m.value)?"Note: letters outside plain English will print as ? on a dot matrix printer.":""}
 function saveDraft(){if(role!=="s"||!$("m"))return;const d={};DF.forEach(i=>{if($(i))d[i]=$(i).value});try{sessionStorage.setItem("sfax-d",JSON.stringify(d))}catch(e){}countM()}
 function restoreDraft(){try{const d=JSON.parse(sessionStorage.getItem("sfax-d")||"null");if(d)DF.forEach(i=>{if($(i)&&d[i])$(i).value=d[i]})}catch(e){}countM()}
-async function cancelMsg(id){if(!confirm("Cancel this message? It will be deleted and cannot be restored."))return;
- try{await api("/api/messages/"+id+"/cancel","POST",{});toast("Message cancelled.");sel=null;refresh()}catch(x){toast(x.message)}}
+async function cancelMsg(id){if(!confirm("Delete this message? It will not be printed and cannot be restored."))return;
+ try{await api("/api/messages/"+id+"/cancel","POST",{});sentDel(id);toast("Message deleted.");sel=null;last="";refresh()}catch(x){toast(x.message)}}
 async function sendMsg(){
  const e=$("serr"),ok=$("sok"),b=$("sendBtn");e.textContent="";ok.classList.add("hide");
  const g=i=>$(i).value.trim(),em=/^[^\s@]+@[^\s@]+\.[^\s@]+$/,pn=/^[1-9][0-9]{5}$/;
@@ -899,7 +986,8 @@ async function sendMsg(){
   if(!sendRid)sendRid=crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random();
   const k=await api("/api/po/key/"+g("c"));
   const enc=await sealFor(k,{to:g("to"),message:g("m"),senderEmail:g("dse"),receiverEmail:g("dre"),senderAddress:g("dsa"),toAddress:g("dra")},g("c"));
-  await api("/api/messages","POST",{to:g("to"),code:g("c"),rid:sendRid,enc});
+  const sent=await api("/api/messages","POST",{to:g("to"),code:g("c"),rid:sendRid,enc});
+  sentSave(sent&&sent.id,{to:g("to"),m:g("m"),se:g("dse"),re:g("dre"),sa:g("dsa"),ra:g("dra"),pin:g("c"),at:Date.now()});
   sendRid=null;try{sessionStorage.removeItem("sfax-d")}catch(_){}
   const who=g("to"),pin=g("c");
   DF.forEach(i=>$(i).value="");$("rNear").innerHTML="";$("cNote").textContent="";prefill();countM();
